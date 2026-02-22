@@ -21,66 +21,69 @@
 **Mobile Project Initialization**
 - [ ] Initialize React Native project (Expo or bare)
 - [ ] Configure TypeScript for React Native
-- [ ] Set up folder structure
-- [ ] Create .env and configuration
+- [ ] Set up folder structure (screens, components, services, store)
+- [ ] Create .env and environment configuration
 - [ ] Configure ESLint and Prettier
-- [ ] Set up Jest for mobile testing
+- [ ] Set up Jest and React Native Testing Library
+- [ ] Configure Expo development environment (if using Expo)
 
-**Mobile Navigation**
-- [ ] Install React Navigation
-- [ ] Set up navigation structure (tab, stack, drawer)
-- [ ] Create bottom tab navigation (Home, Search, Inbox, Profile)
-- [ ] Create navigation state management
-- [ ] Implement navigation permissions for Android/iOS
-
-**Mobile HTTP Client**
-- [ ] Configure Axios for React Native
-- [ ] Set up interceptors for auth tokens
-- [ ] Create API service layer
-- [ ] Implement error handling
-- [ ] Set up request/response logging
-
-**Mobile State Management**
+**Mobile State Management & HTTP Client**
 - [ ] Set up Redux Toolkit
-- [ ] Create auth slice
+- [ ] Create auth slice (for Clerk user state)
 - [ ] Create user slice
-- [ ] Create community slice
-- [ ] Create app slices
+- [ ] Create communities slice
+- [ ] Create listings slice
+- [ ] Create messaging slice
+- [ ] Configure Axios for React Native with request interceptors
+- [ ] Set up error handling and logging
+- [ ] Create API service layer
 
-### Authentication (Mobile)
+**Mobile Navigation Setup**
+- [ ] Install React Navigation
+- [ ] Set up bottom tab navigation (Home, Search, Inbox, Profile)
+- [ ] Create stack navigators for each tab
+- [ ] Set up authentication flow (conditional rendering)
+- [ ] Implement navigation state management
+- [ ] Handle deep linking (optional)
 
-**Auth UI Components**
-- [ ] Create Login screen
-- [ ] Create Register screen
-- [ ] Create Email Verification screen
-- [ ] Create Navigation guard for auth
-- [ ] Implement biometric login (optional for MVP+)
+### Authentication (Mobile with Clerk)
 
-**Auth Features**
-- [ ] Implement registration flow
-- [ ] Implement login flow
-- [ ] Implement email verification
-- [ ] Implement token storage (AsyncStorage)
-- [ ] Implement auto-login on app start
-- [ ] Implement logout
+**Clerk Mobile Setup**
+- [ ] Install @clerk/clerk-react-native SDK
+- [ ] Initialize Clerk in app entry point
+- [ ] Configure Clerk publishable key from .env
+- [ ] Create Clerk authentication flow UI
+- [ ] Implement useAuth hook from Clerk
+- [ ] Set up user profile sync to Redux
+
+**Auth Screens & Features**
+- [ ] Create Login screen (use Clerk `<SignIn />` or custom with Clerk)
+- [ ] Create Register screen (use Clerk `<SignUp />`)
+- [ ] Create Email Verification screen (Clerk-managed)
+- [ ] Implement OAuth login (Google, GitHub)
+- [ ] Implement biometric login with Clerk (optional for MVP+)
+- [ ] Create onboarding/profile completion flow after signup
+- [ ] Implement logout functionality
+- [ ] Handle auth state persistence
 
 ### User Profile (Mobile)
 
-**Profile Screens & Components**
-- [ ] Create Profile screen
+**Profile Screens & Features**
+- [ ] Create View Profile screen
 - [ ] Create Edit Profile screen
-- [ ] Create Profile Picture Upload
+- [ ] Create Profile Picture upload (via Supabase Storage API)
 - [ ] Create Settings screen
 - [ ] Create About/Help screen
+- [ ] Implement profile photo from Supabase Storage URL
+- [ ] Sync profile edits back to backend/Supabase
 
-**Profile Features**
-- [ ] View user profile
-- [ ] Edit profile information
-- [ ] Upload profile picture
-- [ ] Change password
-- [ ] Logout functionality
+**Profile Data Management**
+- [ ] Store user data in Redux
+- [ ] Sync Clerk user to Supabase user_profiles table
+- [ ] Handle profile image uploads with proper loading states
+- [ ] Implement error handling for failed uploads
 
-**Week 9 Milestone**: React Native app runs on Android/iOS, authentication works, user profiles functional
+**Week 9 Milestone**: React Native app runs on Android/iOS, Clerk authentication works, user profiles functional, navigation complete
 
 ---
 
@@ -88,57 +91,69 @@
 
 ### Marketplace (Mobile)
 
-**Browse Listings Screen**
-- [ ] Create Marketplace screen
-- [ ] Create Listing List component
-- [ ] Create Listing Card component
+**Browse Listings**
+- [ ] Create Marketplace/Home screen
+- [ ] Create Listing List component (fetch from backend API)
+- [ ] Create Listing Card component (display Supabase Storage images)
 - [ ] Implement infinite scroll/pagination
-- [ ] Add search bar
-- [ ] Add basic filters
+- [ ] Add search functionality
+- [ ] Add basic filters (category, price, condition)
+- [ ] Show loading and error states
+- [ ] Pull-to-refresh functionality
 
-**Listing Detail Screen**
+**Listing Details**
 - [ ] Create Listing Detail screen
-- [ ] Create Image carousel
-- [ ] Create Listing info section
-- [ ] Create Seller info section
-- [ ] Add "Message Seller" button
-- [ ] Add "Save" button
+- [ ] Create Image carousel (Supabase Storage images)
+- [ ] Create Listing info section (title, price, description, condition)
+- [ ] Create Seller info card with profile photo
+- [ ] Add "Message Seller" button (navigation to messaging)
+- [ ] Add "Save Listing" button (favorites local storage)
+- [ ] Show similar listings
+- [ ] Track listing views with PostHog
 
-**Create Listing Screen**
-- [ ] Create Create Listing screen
-- [ ] Create Form with validation
-- [ ] Create Image picker
-- [ ] Add preview
-- [ ] Implement success confirmation
-
-**Manage Listings Screen**
+**Create/Manage Listings**
+- [ ] Create Create Listing screen with form
+- [ ] Create image picker (take photo or select from gallery)
+- [ ] Upload images to Supabase Storage via backend API
+- [ ] Show upload progress
+- [ ] Create preview before posting
+- [ ] Form validation with proper error handling
 - [ ] Create My Listings screen
-- [ ] Create Quick edit capability
-- [ ] Add delete confirmation
-- [ ] Show listing stats
+- [ ] Quick edit capability (update listing)
+- [ ] Delete confirmation
+- [ ] Show listing stats (views, inquiries)
 
 ### Communities (Mobile)
 
-**Communities Screen**
-- [ ] Create Communities browse screen
+**Browse Communities**
+- [ ] Create Communities screen
 - [ ] Create Community List component
-- [ ] Create Community Card component
-- [ ] Add search functionality
+- [ ] Create Community Card component (show logo from Supabase Storage)
+- [ ] Implement search functionality
+- [ ] Add filtering by category/type
+- [ ] Show member count and trust indicators
 
-**Community Detail Screen**
+**Community Details**
 - [ ] Create Community Details screen
-- [ ] Show member count
-- [ ] Show community info
-- [ ] Create Join/Leave button
-- [ ] Show community rules
+- [ ] Show community info (name, description, rules)
+- [ ] Show member count and join status
+- [ ] Create Join/Leave button with confirmation
+- [ ] Show community logo from Supabase Storage
+- [ ] List community members (first 10, paginated)
 
-**Create Community Screen**
-- [ ] Create Create Community screen
-- [ ] Create Community Form
-- [ ] Add validation
-- [ ] Implement success flow
+**Create Community**
+- [ ] Create Create Community screen with form
+- [ ] Upload community logo to Supabase Storage
+- [ ] Form validation
+- [ ] Handle domain-based verification flow
+- [ ] Show success/error messages
 
-**Week 10 Milestone**: Full marketplace on mobile, community management, all listing features
+### Analytics Tracking
+- [ ] Set up PostHog for mobile analytics
+- [ ] Track: listing viewed, listing created, community joined, message sent
+- [ ] Set user properties (user_id, email from Clerk)
+
+**Week 10 Milestone**: Full marketplace on mobile, community management complete, all listing features working, Supabase Storage image handling
 
 ---
 
@@ -162,27 +177,41 @@
 - [ ] Add keyboard handling
 
 **Messaging Features**
-- [ ] Send text messages
-- [ ] Mark messages as read
+- [ ] Send text messages via backend HTTP API
+- [ ] Mark messages as read (synced with backend)
 - [ ] Archive conversations
 - [ ] Show unread messages differently
 - [ ] Add loading states
+- [ ] Handle message images from Supabase Storage
 
-### Backend Support (Coordinated with Backend Team)
-- [ ] Rating Service integration
-- [ ] Trust Score Calculation
-- [ ] Reporting System endpoints
-- [ ] WebSocket Integration for real-time messaging
+### Clerk Authentication for Mobile
+- [ ] Install @clerk/clerk-react-native SDK
+- [ ] Integrate Clerk in mobile app
+- [ ] Set up OAuth flows (Google, GitHub)
+- [ ] Implement biometric login (optional)
+- [ ] Sync Clerk user to app state
+- [ ] Handle authentication state changes
 
-### Real-time Features (Mobile Side)
-- [ ] Implement Socket.io client
-- [ ] Connect to messaging WebSocket
-- [ ] Implement message broadcasting listener
-- [ ] Implement typing indicators
-- [ ] Implement read receipts
-- [ ] Handle connection state
+### Supabase Realtime Integration (replaces Socket.io)
+- [ ] Install Supabase Realtime client
+- [ ] Set up Supabase Realtime subscriptions for messages
+- [ ] Set up Realtime subscriptions for conversations
+- [ ] Implement real-time message delivery
+- [ ] Implement real-time typing indicators (via Realtime channel)
+- [ ] Implement real-time read receipts
+- [ ] Handle connection state (online/offline)
+- [ ] Implement reconnection logic
+- [ ] Handle WebSocket disconnections gracefully
+- [ ] Add offline message queue (optional)
 
-**Week 11 Milestone**: Mobile messaging complete, WebSocket integrated, real-time features working
+### Analytics & Monitoring for Mobile
+- [ ] Set up PostHog for mobile analytics
+- [ ] Track user events (listing viewed, message sent, etc)
+- [ ] Set up Sentry for error tracking
+- [ ] Configure Sentry React Native SDK
+- [ ] Test error capture and reporting
+
+**Week 11 Milestone**: Mobile messaging complete, Supabase Realtime integrated, real-time updates working, analytics tracking
 
 ---
 
@@ -191,62 +220,123 @@
 ### Mobile Polish & Optimization
 
 **Performance Optimization**
-- [ ] Reduce app bundle size
-- [ ] Optimize image delivery
-- [ ] Implement lazy loading
-- [ ] Test on low-end devices
-- [ ] Optimize startup time
-- [ ] Battery usage optimization
+- [ ] Reduce app bundle size (use tree-shaking, code splitting)
+- [ ] Optimize image delivery (lazy load, compression)
+- [ ] Implement lazy loading for screens and components
+- [ ] Test on low-end devices (measure performance)
+- [ ] Optimize app startup time
+- [ ] Battery usage optimization (reduce background tasks)
+- [ ] Memory leak testing and fixes
+- [ ] Profile app performance with DevTools
 
 **Native Features**
-- [ ] Implement push notifications
-- [ ] Implement background sync
-- [ ] Implement camera access for images
+- [ ] Implement push notifications (Firebase Cloud Messaging / APNS)
+- [ ] Test push notification delivery
+- [ ] Implement background sync (optional)
+- [ ] Implement camera access for photo uploads
 - [ ] Implement file picker
-- [ ] Add haptic feedback
-- [ ] Test permissions handling
+- [ ] Add haptic feedback for interactions
+- [ ] Test permissions handling (camera, photo library, notifications)
+
+### Error Tracking & Analytics
+
+**Sentry Integration**
+- [ ] Install Sentry React Native SDK
+- [ ] Initialize Sentry with DSN from .env
+- [ ] Configure error boundaries
+- [ ] Track React Navigation errors
+- [ ] Set up performance monitoring
+- [ ] Test error capture and reporting
+- [ ] Configure alerts for critical errors
+
+**PostHog Analytics**
+- [ ] Set up PostHog for mobile app
+- [ ] Track user events (listing viewed, messaged sent, community joined)
+- [ ] Set user properties (user_id, email from Clerk)
+- [ ] Create PostHog funnels for key user flows
+- [ ] Review analytics dashboards before launch
 
 ### Build & Store Preparation
 
 **iOS Build Preparation**
-- [ ] Create app icons (various sizes)
-- [ ] Create splash screens
-- [ ] Create App Store screenshots
-- [ ] Write app description
-- [ ] Create privacy policy
-- [ ] Create terms of service
-- [ ] Configure code signing certificate
-- [ ] Create iOS app identifier
-- [ ] Generate provisioning profile
+- [ ] Create app icons (all required sizes: 1024x1024, 180x180, 120x120, etc.)
+- [ ] Create launch/splash screen assets
+- [ ] Create App Store screenshots (min 2-5 per screen, max 5-10)
+- [ ] Write compelling app description (200-500 words)
+- [ ] Create privacy policy URL (document privacy practices)
+- [ ] Create terms of service URL
+- [ ] Prepare promotional website/landing page (optional)
+- [ ] Configure code signing certificates with Apple
+- [ ] Create provisioning profiles for distribution
+- [ ] Set Bundle ID and Team ID
+- [ ] Configure version number and build number
+- [ ] Verify all privacy requirements (GDPR, privacy law compliance)
+- [ ] Complete App Store review guidelines checklist
 
 **Android Build Preparation**
-- [ ] Create app icons (various sizes)
-- [ ] Create splash screens
-- [ ] Create Google Play screenshots
-- [ ] Write app description
-- [ ] Configure Android app signing
-- [ ] Generate keystore file
-- [ ] Create Google Play Developer account setup
+- [ ] Create app icons (all required sizes: 512x512, 192x192, 108x108, etc.)
+- [ ] Create launch/splash screen assets
+- [ ] Create Google Play screenshots (min 2-8 per screen)
+- [ ] Create feature graphics (1024x500)
+- [ ] Write compelling app description
+- [ ] Configure privacy policy URL
+- [ ] Declare all necessary permissions properly
+- [ ] Generate keystore file and back it up securely
+- [ ] Configure signing key alias and password
+- [ ] Set Package name (cannot be changed after first release)
+- [ ] Configure version code and version name
+- [ ] Set target SDK version to latest (Android 14+ recommended)
+- [ ] Set minimum SDK version (SDK 21+ recommended for broad compatibility)
+- [ ] Complete Google Play content rating questionnaire
+- [ ] Review Google Play policies checklist
 
 ### Testing & Validation
 
 **Device Testing**
-- [ ] Test on iPhone 12 (iOS)
-- [ ] Test on iPhone 14 Pro (iOS)
-- [ ] Test on Pixel 6 (Android)
-- [ ] Test on Samsung Galaxy S21 (Android)
-- [ ] Test on low-end Android devices
-- [ ] Test on tablets (iPad, Android tablets)
+- [ ] Test on iPhone 12 (iOS, medium device)
+- [ ] Test on iPhone 14 Pro (iOS, newer device)
+- [ ] Test on iPhone SE (iOS, small screen)
+- [ ] Test on Pixel 6 (Android, modern)
+- [ ] Test on Samsung Galaxy A12 (Android, budget device)
+- [ ] Test on Samsung Galaxy S21 (Android, premium device)
+- [ ] Test on iPad (tablet - if supported)
+- [ ] Test on Android tablet (if supported)
 
-**Edge Cases & Performance**
-- [ ] Test with slow network (3G)
-- [ ] Test with offline mode
-- [ ] Test with large message histories
-- [ ] Test with 100+ listings
-- [ ] Memory leak testing
-- [ ] Battery drain testing
+**Edge Cases & Reliability**
+- [ ] Test with slow network (3G, latency)
+- [ ] Test with intermittent network drops
+- [ ] Test offline mode (queue messages, sync when online)
+- [ ] Test with 100+ listings loaded
+- [ ] Test with 50+ conversation messages
+- [ ] Test long app sessions (memory stability)
+- [ ] Test background suspend/resume
+- [ ] Memory leak testing with heap snapshots
+- [ ] Battery drain testing (monitoring background tasks)
+- [ ] Crash reporting verification (Sentry)
 
-**Week 12 Milestone**: Apps production-ready, TestFlight & Google Play ready for submission
+### Final Checklist Before Submission
+
+**Pre-Launch Review**
+- [ ] All features from Week 9-11 tested and working
+- [ ] No console errors/warnings
+- [ ] All strings localized (if needed)
+- [ ] Dark mode tested (if supported)
+- [ ] Accessibility tested (colors, text sizes, voiceover)
+- [ ] All API endpoints integration tested
+- [ ] Clerk authentication fully tested (login, signup, logout, OAuth)
+- [ ] Supabase Realtime messaging tested
+- [ ] Image uploads working (Supabase Storage)
+- [ ] PostHog analytics tracking correctly
+- [ ] Sentry error tracking working
+- [ ] App icons display correctly on devices
+- [ ] Permissions requests working properly
+- [ ] App badge count updating correctly
+- [ ] Push notifications working (test with backend)
+- [ ] App name and description final
+- [ ] Screenshots final and approved
+- [ ] Version numbers set correctly
+
+**Week 12 Milestone**: Apps production-ready, TestFlight & Google Play submission ready, all features tested
 
 ---
 
@@ -328,22 +418,29 @@
 
 ---
 
-## Technology Stack
+## Technology Stack (Modern Stack)
 
-**Language**: TypeScript  
-**Framework**: React Native  
+**Language**: TypeScript (ES2020+)  
+**Framework**: React Native (with Expo or bare)  
 **State Management**: Redux Toolkit  
-**HTTP Client**: Axios  
-**Navigation**: React Navigation  
-**Storage**: AsyncStorage  
-**Real-time**: Socket.io-client  
+**HTTP Client**: Axios (with request interceptors for Clerk JWT)  
+**Navigation**: React Navigation v6 (tab, stack, drawer navigators)  
+**Authentication**: Clerk React Native SDK (OAuth, MFA, biometric login)  
+**Storage**: AsyncStorage (local key-value) + Supabase Storage (cloud images)  
+**Real-time**: Supabase Realtime (WebSocket for messaging - replaces Socket.io)  
+**Database Client**: Supabase JS (Realtime subscriptions)  
 **Testing**: Jest + React Native Testing Library  
-**Images**: React Native Image Crop Picker  
-**File Upload**: Formidable/Multipart  
-**Push Notifications**: Firebase Cloud Messaging / APNS  
-**Linting**: ESLint  
+**Images**: React Native Image Crop Picker (camera & gallery access)  
+**File Upload**: Supabase Storage SDK (via backend API)  
+**Push Notifications**: Firebase Cloud Messaging (Android) / APNS (iOS)  
+**Payments**: Stripe React Native SDK (for future payment features)  
+**Analytics**: PostHog React Native SDK (product analytics)  
+**Error Tracking**: Sentry React Native SDK (error tracking, performance monitoring)  
+**Linting**: ESLint
 **Formatting**: Prettier  
-**Build**: Expo (or bare React Native)  
+**Build Tool**: Expo CLI (or bare `react-native` CLI)  
+**DNS**: Cloudflare (CDN, SSL, DDoS protection)  
+**Domain**: Namecheap (domain registration)  
 
 ---
 
@@ -354,45 +451,207 @@ mobile/
 ├── src/
 │   ├── screens/
 │   │   ├── Auth/
+│   │   │   ├── LoginScreen.tsx
+│   │   │   ├── RegisterScreen.tsx
+│   │   │   └── OnboardingScreen.tsx
 │   │   ├── Home/
+│   │   │   ├── HomeScreen.tsx (marketplace feed)
+│   │   │   └── ListingDetailScreen.tsx
 │   │   ├── Search/
-│   │   ├── Listing/
+│   │   │   ├── SearchScreen.tsx
+│   │   │   ├── FilterBottomSheet.tsx
+│   │   │   └── CategoryScreen.tsx
 │   │   ├── Messaging/
+│   │   │   ├── InboxScreen.tsx
+│   │   │   ├── ConversationScreen.tsx
+│   │   │   └── CreateMessageScreen.tsx
+│   │   ├── Listing/
+│   │   │   ├── CreateListingScreen.tsx
+│   │   │   ├── MyListingsScreen.tsx
+│   │   │   └── EditListingScreen.tsx
+│   │   ├── Community/
+│   │   │   ├── CommunitiesScreen.tsx
+│   │   │   ├── CommunityDetailScreen.tsx
+│   │   │   └── CreateCommunityScreen.tsx
 │   │   └── Profile/
+│   │       ├── ProfileScreen.tsx
+│   │       ├── EditProfileScreen.tsx
+│   │       └── SettingsScreen.tsx
 │   ├── components/
 │   │   ├── Common/
+│   │   │   ├── Button.tsx
+│   │   │   ├── Input.tsx
+│   │   │   ├── Card.tsx
+│   │   │   ├── LoadingSpinner.tsx
+│   │   │   └── Avatar.tsx
 │   │   ├── Auth/
 │   │   ├── Community/
+│   │   │   ├── CommunityCard.tsx
+│   │   │   └── CommunitySelector.tsx
 │   │   ├── Listing/
+│   │   │   ├── ListingCard.tsx
+│   │   │   ├── ImageCarousel.tsx
+│   │   │   └── ListingForm.tsx
 │   │   └── Messaging/
+│   │       ├── ConversationCard.tsx
+│   │       ├── MessageBubble.tsx
+│   │       └── MessageInput.tsx
 │   ├── services/
 │   │   ├── api/
-│   │   ├── auth.ts
-│   │   ├── community.ts
-│   │   ├── listing.ts
-│   │   └── messaging.ts
+│   │   │   └── client.ts (Axios instance with Clerk JWT)
+│   │   ├── auth.ts (Clerk integration)
+│   │   ├── supabase.ts (Realtime client)
+│   │   ├── community.ts (API calls)
+│   │   ├── listing.ts (API calls)
+│   │   ├── messaging.ts (API & Realtime subscriptions)
+│   │   ├── storage.ts (Supabase Storage operations)
+│   │   └── analytics.ts (PostHog event tracking)
 │   ├── store/
 │   │   ├── slices/
-│   │   ├── store.ts
-│   │   └── hooks.ts
+│   │   │   ├── authSlice.ts
+│   │   │   ├── communitiesSlice.ts
+│   │   │   ├── listingsSlice.ts
+│   │   │   └── messagingSlice.ts
+│   │   ├── store.ts (configure store)
+│   │   └── hooks.ts (useAppDispatch, useAppSelector)
 │   ├── hooks/
+│   │   ├── useAuth.ts (Clerk auth hook)
+│   │   ├── useRealtime.ts (Supabase Realtime subscriptions)
+│   │   └── useAsync.ts (generic async operations)
 │   ├── utils/
+│   │   ├── validators.ts (Zod schemas)
+│   │   ├── formatters.ts (price, date formatting)
+│   │   └── helpers.ts (utility functions)
 │   ├── types/
+│   │   ├── index.ts (common types)
+│   │   ├── api.ts (API response types)
+│   │   └── models.ts (data models)
 │   ├── navigation/
-│   ├── App.tsx
-│   └── index.ts
+│   │   ├── RootNavigator.tsx
+│   │   ├── AuthNavigator.tsx
+│   │   ├── HomeNavigator.tsx
+│   │   ├── SearchNavigator.tsx
+│   │   ├── MessagingNavigator.tsx
+│   │   └── ProfileNavigator.tsx
+│   ├── App.tsx (main component with ClerkProvider)
+│   └── index.ts (entry point)
 ├── assets/
 │   ├── icons/
 │   ├── images/
-│   └── fonts/
+│   ├── fonts/
+│   └── splash/
 ├── tests/
 ├── .env.example
-├── app.json
-├── package.json
-└── tsconfig.json
+├── app.json (Expo config: name, version, icon, splash)
+├── package.json (dependencies)
+├── tsconfig.json (TypeScript)
+├── .gitignore
+└── README.md
 ```
 
 ---
+
+## App Store & Play Store Submission Checklist
+
+### iOS (TestFlight Ready)
+- [ ] App icons all sizes (1024x1024, 180x180, etc.)
+- [ ] Splash screen assets
+- [ ] Privacy policy URL configured
+- [ ] Terms of service configured
+- [ ] App description finalized
+- [ ] Screenshots prepared (min 2-5 per screen)
+- [ ] Promotional artwork ready
+- [ ] Code signing certificates
+- [ ] Provisioning profiles
+- [ ] Bundle ID configured
+- [ ] Version number set
+- [ ] Build number configured
+- [ ] Privacy policy compliance verified
+
+### Android (Play Console Ready)
+- [ ] App icons all sizes (512x512, 192x192, etc.)
+- [ ] Splash screen assets
+- [ ] Privacy policy URL configured
+- [ ] Permissions declared properly
+- [ ] App description finalized
+- [ ] Screenshots prepared (min 2-8 per screen)
+- [ ] Promotional graphic ready
+- [ ] Feature graphic ready
+- [ ] Keystore file created and backed up
+- [ ] Signing key alias configured
+- [ ] Package name finalized
+- [ ] Version code set
+- [ ] Version name set
+- [ ] Target SDK configured
+- [ ] Minimum SDK configured
+- [ ] Content rating questionnaire completed
+
+---
+
+## Success Metrics (End of Phase 1B)
+
+- [ ] Android app installs cleanly and runs on devices
+- [ ] iOS app runs on TestFlight on real devices
+- [ ] All features from Web Phase 1A working on mobile
+- [ ] Clerk authentication complete (login, signup, logout, OAuth)
+- [ ] Marketplace fully functional (browse, search, create, edit)
+- [ ] Messaging works with Supabase Realtime (real-time updates)
+- [ ] Image uploads working (Supabase Storage)
+- [ ] App starts in <2s on modern devices
+- [ ] App bundle size <100MB (both iOS and Android)
+- [ ] Zero crashes on tested devices (Sentry reports clean)
+- [ ] 80%+ test coverage for components
+- [ ] Lighthouse-equivalent score >85 (performance, accessibility)
+- [ ] PostHog analytics tracking user events
+- [ ] Sentry error tracking working correctly
+- [ ] All required assets prepared for app stores
+- [ ] TestFlight and Google Play ready for submission
+- [ ] Privacy policy and terms of service URLs configured
+- [ ] Permissions properly declared and functioning
+
+---
+
+## Deployment & Release Notes
+
+**Before App Store Submission:**
+1. Merge all branches to main
+2. Update version number (iOS: Info.plist, Android: build.gradle)
+3. Run full test suite - all tests passing
+4. Build final APK/IPA on clean machine
+5. Test on real devices one more time
+6. Tag release in Git: v1.0.0
+7. Create release notes for changelog
+
+**Post-Launch Monitoring:**
+- Monitor Sentry for crashes
+- Review PostHog analytics
+- Watch for app review rejection reasons
+- Prepare hotfix branch if needed
+
+---
+
+## DevOps Coordination Notes
+
+**Coordinated with Backend Team (Week 11):**
+- Stripe payment integration
+- Rating & Trust Score System
+- Moderation & Reporting endpoints
+- Supabase Realtime for real-time messaging
+- Push notification webhook setup
+
+**Coordinated with Frontend Team:**
+- Shared component patterns (Button, Input, Card, etc.)
+- Shared Redux store structure
+- Shared authentication flow via Clerk
+- Shared API contracts and error handling
+- Shared validation schemas (Zod)
+
+---
+
+**Document Version**: 2.0 (Updated with Modern Tech Stack)  
+**Created**: February 2026  
+**Updated**: With Clerk, Vite, Vercel, Supabase Realtime, PostHog, Sentry  
+**Purpose**: Mobile Phase 1B implementation with modern managed services
 
 ## App Store & Play Store Submission Checklist
 

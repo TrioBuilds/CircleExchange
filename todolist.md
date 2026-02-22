@@ -31,7 +31,7 @@ This approach allows the backend to be stable by the time mobile development beg
 ### Week 1: Project Setup & Database Foundation
 
 #### Backend Tasks (3 developers)
-- [x] **Repository Setup**
+  - [x] **Repository Setup**
   - [x] Initialize Git repository with proper branching strategy
   - [x] Create backend, frontend, mobile directory structure
   - [x] Set up .gitignore and README files
@@ -45,44 +45,63 @@ This approach allows the backend to be stable by the time mobile development beg
   - [ ] Set up ESLint and Prettier for code quality
   - [ ] Configure Jest for unit testing
 
-- [ ] **Backend Core Infrastructure**
+- [ ] **Supabase Setup (replaces self-hosted PostgreSQL + Redis)**
+  - [ ] Create Supabase project in Supabase dashboard
+  - [ ] Configure Supabase authentication settings
+  - [ ] Set up Supabase environment variables (URL, anon key, service key)
+  - [ ] Enable Row Level Security (RLS) on all tables
+  - [ ] Set up Supabase Realtime for real-time messaging
+  - [ ] Configure Supabase Storage buckets (avatars, community-logos, assets)
+  - [ ] Test Supabase client connection
+
+- [ ] **Backend Core Infrastructure (Node.js + TypeScript)**
   - [ ] Create Express.js server entry point (src/index.ts)
-  - [ ] Set up middleware (CORS, JSON parser, error handler)
-  - [ ] Create database connection pool (PostgreSQL)
-  - [ ] Create Redis connection (optional for MVP, but setup)
-  - [ ] Set up logging system
+  - [ ] Set up middleware (CORS, JSON parser, Clerk auth, error handler)
+  - [ ] Initialize Supabase client (replaces PostgreSQL connection pool)
+  - [ ] Initialize Clerk backend SDK (for verifying JWT tokens)
+  - [ ] Initialize Resend email client (replaces SendGrid/Nodemailer)
+  - [ ] Initialize Stripe SDK (for payment processing)
+  - [ ] Initialize Upstash Redis client (optional, for caching)
+  - [ ] Set up logging system with Sentry integration
   - [ ] Create health check endpoint (/api/v1/health)
+  - [ ] Configure all service API keys in .env
 
-- [ ] **Docker Configuration**
-  - [ ] Create backend Dockerfile with multi-stage builds
-  - [ ] Create docker-compose.yml with all services
-  - [ ] Configure PostgreSQL image and initialization
-  - [ ] Configure Redis image (optional)
-  - [ ] Create .dockerignore file
-  - [ ] Test local Docker setup (docker-compose up)
+- [ ] **Modern Stack - No Docker Compose!**
+  - [ ] All services use managed cloud platforms
+  - [ ] Database: Supabase (PostgreSQL managed) - no Docker needed
+  - [ ] Authentication: Clerk (managed) - no JWT complexity
+  - [ ] Cache: Upstash Redis (serverless) - optional for MVP
+  - [ ] Email: Resend (managed API) - no SMTP server
+  - [ ] Real-time: Supabase Realtime - built-in WebSocket
+  - [ ] Storage: Supabase Storage - S3-compatible, managed
 
-- [ ] **Database Schema**
+- [ ] **Database Schema (in Supabase)**
   - [ ] Design and document all table structures
-  - [ ] Create database schema.sql file with all tables
+  - [ ] Create database schema.sql file with all tables for Supabase
   - [ ] Create indexes for performance optimization
   - [ ] Set up auto-update triggers for updated_at columns
-  - [ ] Create verification_tokens table for email verification
-  - [ ] Test schema creation and migration
+  - [ ] Create verification_tokens table (if needed alongside Clerk)
+  - [ ] Create and test schema in Supabase Dashboard
+  - [ ] Set up Row Level Security (RLS) policies on all tables
   - [ ] Create database seeding utility for testing data
+  - [ ] Enable Realtime on messaging and conversation tables
 
 #### Frontend Tasks (2 developers)
 - [ ] **Frontend Project Setup**
-  - [ ] Initialize React project with TypeScript (Create React App or Vite)
-  - [ ] Install and configure Tailwind CSS or Material-UI
-  - [ ] Set up ESLint and Prettier
-  - [ ] Configure Jest and React Testing Library
+  - [ ] Initialize React project with TypeScript using **Vite** (5-10x faster than CRA)
+  - [ ] Install and configure Tailwind CSS for styling
+  - [ ] Set up ESLint and Prettier for code quality
+  - [ ] Configure Vitest and React Testing Library
   - [ ] Create folder structure (components, pages, services, store, utils)
+  - [ ] Set up environment variables (.env, .env.local, .env.production)
 
-- [ ] **Frontend Build Configuration**
-  - [ ] Set up environment variables system
-  - [ ] Configure API base URL for different environments
-  - [ ] Set up build optimization
-  - [ ] Create Dockerfile for frontend
+- [ ] **Frontend Build Configuration & Vercel Deployment**
+  - [ ] Configure Vite build optimization
+  - [ ] Set up environment variables for different environments
+  - [ ] Configure API base URL (pointing to backend)
+  - [ ] Create vercel.json for Vercel deployment
+  - [ ] Set up automatic CI/CD: GitHub → Vercel (auto-deploy on push)
+  - [ ] Configure Vercel environment variables (API keys, URLs)
 
 - [ ] **Frontend State Management**
   - [ ] Set up Redux Toolkit store
@@ -107,78 +126,65 @@ This approach allows the backend to be stable by the time mobile development beg
 
 ---
 
-### Week 2: Authentication System
+### Week 2: Authentication System (Clerk-based - No more JWT!)
 
-#### Backend Tasks (3 developers)
-- [ ] **JWT & Token Utilities**
-  - [ ] Implement JWT token generation (access tokens)
-  - [ ] Implement JWT token verification
-  - [ ] Implement JWT refresh token logic
-  - [ ] Create email verification token generation
-  - [ ] Create password reset token generation
-  - [ ] Add token expiration handling
-  - [ ] Write unit tests for JWT utility (80%+ coverage)
+#### Backend Tasks (2 developers)
+- [ ] **Clerk Backend Integration (replaces JWT implementation)**
+  - [ ] Install @clerk/backend SDK
+  - [ ] Initialize Clerk backend client with secret key
+  - [ ] Create Clerk middleware for Express (verifyToken)
+  - [ ] Implement Clerk webhook handler for user events
+  - [ ] Create user profile sync service (Clerk → Supabase)
+  - [ ] Sync user.created, user.updated, user.deleted events
+  - [ ] Write tests for Clerk middleware
 
-- [ ] **Password Security**
-  - [ ] Implement bcrypt password hashing
-  - [ ] Implement password comparison
-  - [ ] Create password strength validation
-  - [ ] Add salt configuration
-  - [ ] Write unit tests for password utility
+- [ ] **User Profile Sync from Clerk**
+  - [ ] Create user_profiles table in Supabase
+  - [ ] Implement webhook handler for new users (sync to Supabase)
+  - [ ] Implement profile update sync from Clerk
+  - [ ] Create profile image upload handler (to Supabase Storage)
+  - [ ] Write integration tests
 
-- [ ] **Auth Middleware**
-  - [ ] Create authMiddleware for protected routes
-  - [ ] Create optionalAuthMiddleware for public routes with optional auth
-  - [ ] Implement error handling in middleware
-  - [ ] Test middleware with Express routes
-  - [ ] Write integration tests for middleware
+- [ ] **Resend Email Integration (replaces SendGrid/Nodemailer)**
+  - [ ] Install Resend SDK
+  - [ ] Create Resend client initialization
+  - [ ] Create email template service
+  - [ ] Create sendWelcomeEmail function
+  - [ ] Create sendPasswordResetEmail function
+  - [ ] Create sendVerificationEmail function
+  - [ ] Write tests for email service
 
-- [ ] **Auth Service**
-  - [ ] Create user registration logic
-  - [ ] Create email verification logic
-  - [ ] Create login logic with validation
-  - [ ] Create getCurrentUser logic
-  - [ ] Implement error handling and validation
-  - [ ] Write comprehensive unit tests
+- [ ] **Protected Route Middleware**
+  - [ ] Create authenticatedRoute middleware (requires Clerk auth)
+  - [ ] Create optionalRoute middleware (auth optional)
+  - [ ] Add proper error responses for 401/403
+  - [ ] Write integration tests
 
-- [ ] **Auth Controller & Routes**
-  - [ ] Create POST /api/v1/auth/register endpoint
-  - [ ] Create GET /api/v1/auth/verify-email endpoint
-  - [ ] Create POST /api/v1/auth/login endpoint
-  - [ ] Create GET /api/v1/auth/me endpoint
+- [ ] **Auth API Routes**
+  - [ ] GET /api/v1/auth/me (get current user from Clerk)
+  - [ ] GET /api/v1/auth/user-profile (get Supabase profile)
+  - [ ] PUT /api/v1/auth/user-profile (update profile)
+  - [ ] POST /api/v1/webhooks/clerk (Clerk webhook handler)
   - [ ] Add proper request validation
-  - [ ] Add API documentation in code
-
-- [ ] **Email Verification**
-  - [ ] Set up email service (SendGrid or Nodemailer)
-  - [ ] Create email template for verification
-  - [ ] Test email sending locally
-  - [ ] Add email verification workflow
-  - [ ] Create email error handling
-
-- [ ] **Password Reset (Phase 1A+)**
-  - [ ] Create POST /api/v1/auth/forgot-password endpoint
-  - [ ] Create POST /api/v1/auth/reset-password endpoint
-  - [ ] Create password reset email template
-  - [ ] Implement password reset validation
 
 #### Frontend Tasks (2 developers)
-- [ ] **Auth Pages & Components**
-  - [ ] Create Login page component
-  - [ ] Create Register page component
-  - [ ] Create Email Verification page
-  - [ ] Create Password Reset pages
-  - [ ] Add form validation
-  - [ ] Add error message handling
-  - [ ] Add loading states
+- [ ] **Clerk Authentication Pages & Components**
+  - [ ] Install @clerk/clerk-react package
+  - [ ] Create ClerkProvider wrapper in App
+  - [ ] Create Login page (use Clerk `<SignIn />` component)
+  - [ ] Create Register page (use Clerk `<SignUp />` component)
+  - [ ] Create "Forgot Password" flow (Clerk-managed)
+  - [ ] Create onboarding/profile completion after signup
+  - [ ] Add loading states during Clerk initialization
+  - [ ] Add error handling for auth failures
 
-- [ ] **Auth Service & HTTP Client**
-  - [ ] Set up Axios HTTP client with interceptors
-  - [ ] Create auth service (register, login, verify email)
-  - [ ] Implement token storage (localStorage)
-  - [ ] Implement auth state management in Redux
-  - [ ] Add automatic token refresh logic
-  - [ ] Create error handling for auth failures
+- [ ] **Clerk HTTP Client Setup**
+  - [ ] Set up Axios HTTP client with Clerk JWT interceptor
+  - [ ] Use `useAuth()` hook to get Clerk JWT token
+  - [ ] Add token to all authenticated requests
+  - [ ] Implement automatic token refresh via Clerk
+  - [ ] Create error handling for 401 responses
+  - [ ] Write tests for HTTP client
 
 - [ ] **Auth UI Components**
   - [ ] Create Input component with validation
@@ -204,12 +210,14 @@ This approach allows the backend to be stable by the time mobile development beg
   - [ ] Create manual testing checklist
 
 **Milestone: Week 2 Completion**
-- [ ] User can register with email and password
-- [ ] Registration sends verification email
-- [ ] User can verify email with token
-- [ ] User can login with credentials
-- [ ] JWT tokens are issued and validated
-- [ ] Protected routes enforce authentication
+- [ ] User can register with Clerk (email/OAuth)
+- [ ] User can login with Clerk (email/OAuth)
+- [ ] Clerk JWT sent with all authenticated API requests
+- [ ] Clerk user synced to Supabase user_profiles table
+- [ ] Protected routes enforce Clerk authentication
+- [ ] Password reset works (Clerk-managed)
+- [ ] Profile image upload works (to Supabase Storage)
+- [ ] Email sending works (Resend)
 - [ ] All tests passing with 80%+ coverage
 
 ---
@@ -471,26 +479,29 @@ This approach allows the backend to be stable by the time mobile development beg
 
 #### Backend Tasks (3 developers)
 
-**Messaging Service**
+**Messaging Service (in Supabase)**
 - [ ] **Conversation Management**
+  - [ ] Create conversations table in Supabase
   - [ ] Implement createOrGetConversation service
   - [ ] Implement getConversations service (user's chats)
   - [ ] Implement getConversationDetails service
   - [ ] Implement archiveConversation service
   - [ ] Add conversation status management
+  - [ ] Set up RLS policies for conversations
   - [ ] Write unit tests
 
 - [ ] **Message Operations**
+  - [ ] Create messages table in Supabase
   - [ ] Implement sendMessage service
   - [ ] Implement getMessage service
   - [ ] Implement getMessages service (conversation history)
   - [ ] Implement deleteMessage service (soft delete)
   - [ ] Implement markAsRead service
-  - [ ] Add message attachments support
+  - [ ] Add message attachments support (Supabase Storage)
   - [ ] Write unit tests
 
 - [ ] **Message Search**
-  - [ ] Implement search within conversation
+  - [ ] Implement full-text search on messages (Supabase)
   - [ ] Implement message indexing
   - [ ] Add message filters
 
@@ -503,44 +514,56 @@ This approach allows the backend to be stable by the time mobile development beg
   - [ ] DELETE /api/v1/conversations/:id/messages/:msgId (delete)
   - [ ] PUT /api/v1/conversations/:id/mark-read (mark as read)
 
-**WebSocket Infrastructure (Foundation)**
-- [ ] **Real-time Messaging Setup**
-  - [ ] Install Socket.io library
-  - [ ] Create WebSocket event handlers structure
-  - [ ] Implement connection/disconnect handlers
-  - [ ] Plan for message broadcasting (not implemented yet)
-  - [ ] Create WebSocket namespace for messaging
-  - [ ] Document WebSocket events
+**Supabase Realtime Infrastructure (replaces Socket.io)**
+- [ ] **Real-time Messaging with Supabase**
+  - [ ] Enable Realtime on messages table in Supabase
+  - [ ] Enable Realtime on conversations table
+  - [ ] Create Realtime subscription management
+  - [ ] Implement real-time message delivery listener
+  - [ ] Implement real-time typing indicators (Realtime channel)
+  - [ ] Implement real-time read receipts
+  - [ ] Handle WebSocket connection/disconnection
+  - [ ] Document Realtime events and channels
+  - [ ] Write integration tests
 
 #### Frontend Tasks (2 developers)
 
-**Messaging UI Components**
+**Messaging UI Components & Supabase Realtime**
 - [ ] **Messaging Pages**
-  - [ ] Create Inbox page
-  - [ ] Create Conversation page
-  - [ ] Create Message thread view
+  - [ ] Create Inbox page (with Realtime updates)
+  - [ ] Create Conversation page (with Realtime messaging)
+  - [ ] Create Message thread view (synced with Realtime)
+
+- [ ] **Supabase Realtime Integration**
+  - [ ] Install Supabase Realtime client
+  - [ ] Create useRealtimeMessages hook
+  - [ ] Subscribe to messages table (Realtime)
+  - [ ] Handle real-time message updates
+  - [ ] Implement optimistic updates (send message, wait for server)
+  - [ ] Handle connection state (online/offline)
+  - [ ] Test Realtime with multiple clients
 
 - [ ] **Messaging Components**
-  - [ ] Create Conversations List component
-  - [ ] Create Conversation Card component
-  - [ ] Create Message Bubble component
+  - [ ] Create Conversations List component (Realtime-enabled)
+  - [ ] Create Conversation Card component (shows unread count, real-time)
+  - [ ] Create Message Bubble component (from Realtime stream)
   - [ ] Create Message Input component
   - [ ] Create Message Timestamp component
-  - [ ] Create Attachment Preview component
+  - [ ] Create Attachment component (Supabase Storage)
 
 - [ ] **Messaging Features (UI Layer)**
-  - [ ] Add message read indicators
-  - [ ] Add typing indicators (prep for WebSocket)
-  - [ ] Add unread count badges
-  - [ ] Add last message preview in list
+  - [ ] Add message read indicators (via Realtime)
+  - [ ] Add typing indicators (via Realtime channel)
+  - [ ] Add unread count badges (synced)
+  - [ ] Add last message preview in list (Realtime)
   - [ ] Add conversation search
 
 **Messaging State Management**
 - [ ] **Redux Slices**
-  - [ ] Create messaging slice
-  - [ ] Manage conversations in state
-  - [ ] Manage messages in state
-  - [ ] Manage unread counts
+  - [ ] Create messaging slice with Realtime support
+  - [ ] Manage conversations in state (real-time updates)
+  - [ ] Manage messages in state (append from Realtime)
+  - [ ] Manage unread counts (from Realtime)
 
 - [ ] **HTTP Integration**
   - [ ] Create messaging service (HTTP calls)
@@ -565,12 +588,14 @@ This approach allows the backend to be stable by the time mobile development beg
 
 **Milestone: Week 7-8 Completion**
 - [ ] Messaging system infrastructure complete
-- [ ] Users can create conversations
-- [ ] Users can send/receive messages
-- [ ] Message history is preserved
-- [ ] Unread count tracking works
-- [ ] All HTTP-based messaging works
-- [ ] WebSocket foundation laid (not integrated yet)
+- [ ] Users can create conversations in Supabase
+- [ ] Users can send/receive messages in real-time (Supabase Realtime)
+- [ ] Message history is preserved in Supabase
+- [ ] Unread count tracking works with Realtime
+- [ ] All HTTP endpoints working for messaging
+- [ ] Supabase Realtime subscriptions integrated
+- [ ] Typing indicators working via Realtime
+- [ ] Read receipts synced via Realtime
 - [ ] All tests passing with 80%+ coverage
 
 ---
@@ -578,8 +603,8 @@ This approach allows the backend to be stable by the time mobile development beg
 ## End of Phase 1A (Weeks 1-8)
 
 ### Phase 1A Deliverables:
-✅ Complete backend REST API with 30+ endpoints
-✅ Production-ready authentication system
+✅ Complete backend REST API with 30+ endpoints (backed by Supabase)
+✅ Production-ready authentication system (Clerk)
 ✅ Community management system
 ✅ User profiles and settings
 ✅ Full marketplace with listings

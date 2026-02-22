@@ -1,1157 +1,21 @@
 # CircleExchange: Phase 1 Implementation Plan
 
 **Phase Duration**: 12 Weeks (Months 1-3)
-
 **Target**: MVP with core marketplace functionality
-
 **Primary Deliverables**: Web app, Android app, Core API, Admin dashboard
-
 **Success Metrics**: 100+ users, 50+ listings, 20+ transactions, 80%+ retention
 
 ---
 
 ## Table of Contents
-1. [Phase 1 Detailed Task Breakdown](#section-0-phase-1-detailed-task-breakdown)
-2. [Technical Setup & Architecture](#section-1-technical-setup--architecture)
-3. [Week 1-2: Foundation](#section-2-week-1-2-foundation)
-4. [Week 3-4: Community Management](#section-3-week-3-4-community-management)
-5. [Week 5-8: Marketplace](#section-4-week-5-8-marketplace)
-6. [Week 9-12: Transactions & Moderation](#section-5-week-9-12-transactions--moderation)
-7. [Testing & Quality Assurance](#section-6-testing--quality-assurance)
-8. [Deployment & Infrastructure](#section-7-deployment--infrastructure)
-9. [Team & Resource Planning](#section-8-team--resource-planning)
-
----
-
-## Section 0: Phase 1 Detailed Task Breakdown
-
-### Overview
-Phase 1 is split into two major chunks:
-- **Phase 1A (Weeks 1-8)**: Backend API & Frontend Web App
-- **Phase 1B (Weeks 9-12)**: Mobile App (Android/iOS) & Polish
-
-This approach allows the backend to be stable by the time mobile development begins, and enables parallel frontend work while backend APIs are being built.
-
----
-
-## PHASE 1A: Backend API & Frontend Web App (Weeks 1-8)
-
-### Week 1: Project Setup & Database Foundation
-
-#### Backend Tasks (3 developers)
-- [ ] **Repository Setup**
-  - [ ] Initialize Git repository with proper branching strategy
-  - [ ] Create backend, frontend, mobile directory structure
-  - [ ] Set up .gitignore and README files
-  - [ ] Configure GitHub repository settings (branch protection, PR templates)
-
-- [ ] **Backend Environment Setup**
-  - [ ] Initialize Node.js project with npm
-  - [ ] Install and configure TypeScript
-  - [ ] Set up tsconfig.json with proper compiler options
-  - [ ] Create environment configuration system (.env.example, env.ts)
-  - [ ] Set up ESLint and Prettier for code quality
-  - [ ] Configure Jest for unit testing
-
-- [ ] **Backend Core Infrastructure**
-  - [ ] Create Express.js server entry point (src/index.ts)
-  - [ ] Set up middleware (CORS, JSON parser, error handler)
-  - [ ] Create database connection pool (PostgreSQL)
-  - [ ] Create Redis connection (optional for MVP, but setup)
-  - [ ] Set up logging system
-  - [ ] Create health check endpoint (/api/v1/health)
-
-- [ ] **Docker Configuration**
-  - [ ] Create backend Dockerfile with multi-stage builds
-  - [ ] Create docker-compose.yml with all services
-  - [ ] Configure PostgreSQL image and initialization
-  - [ ] Configure Redis image (optional)
-  - [ ] Create .dockerignore file
-  - [ ] Test local Docker setup (docker-compose up)
-
-- [ ] **Database Schema**
-  - [ ] Design and document all table structures
-  - [ ] Create database schema.sql file with all tables
-  - [ ] Create indexes for performance optimization
-  - [ ] Set up auto-update triggers for updated_at columns
-  - [ ] Create verification_tokens table for email verification
-  - [ ] Test schema creation and migration
-  - [ ] Create database seeding utility for testing data
-
-#### Frontend Tasks (2 developers)
-- [ ] **Frontend Project Setup**
-  - [ ] Initialize React project with TypeScript (Create React App or Vite)
-  - [ ] Install and configure Tailwind CSS or Material-UI
-  - [ ] Set up ESLint and Prettier
-  - [ ] Configure Jest and React Testing Library
-  - [ ] Create folder structure (components, pages, services, store, utils)
-
-- [ ] **Frontend Build Configuration**
-  - [ ] Set up environment variables system
-  - [ ] Configure API base URL for different environments
-  - [ ] Set up build optimization
-  - [ ] Create Dockerfile for frontend
-
-- [ ] **Frontend State Management**
-  - [ ] Set up Redux Toolkit store
-  - [ ] Create auth slice
-  - [ ] Set up store configuration
-  - [ ] Create Redux DevTools integration
-
-#### DevOps/Infrastructure (1 engineer)
-- [ ] **CI/CD Pipeline Foundation**
-  - [ ] Create GitHub Actions workflow file
-  - [ ] Set up automated testing on PR
-  - [ ] Configure code coverage reporting
-  - [ ] Create deployment workflow skeleton (not active yet)
-  - [ ] Set up secrets management in GitHub
-
-#### QA (1 engineer)
-- [ ] **Testing Infrastructure**
-  - [ ] Create test plan template
-  - [ ] Set up test environment
-  - [ ] Create bug tracking template
-  - [ ] Set up testing documentation
-
----
-
-### Week 2: Authentication System
-
-#### Backend Tasks (3 developers)
-- [ ] **JWT & Token Utilities**
-  - [ ] Implement JWT token generation (access tokens)
-  - [ ] Implement JWT token verification
-  - [ ] Implement JWT refresh token logic
-  - [ ] Create email verification token generation
-  - [ ] Create password reset token generation
-  - [ ] Add token expiration handling
-  - [ ] Write unit tests for JWT utility (80%+ coverage)
-
-- [ ] **Password Security**
-  - [ ] Implement bcrypt password hashing
-  - [ ] Implement password comparison
-  - [ ] Create password strength validation
-  - [ ] Add salt configuration
-  - [ ] Write unit tests for password utility
-
-- [ ] **Auth Middleware**
-  - [ ] Create authMiddleware for protected routes
-  - [ ] Create optionalAuthMiddleware for public routes with optional auth
-  - [ ] Implement error handling in middleware
-  - [ ] Test middleware with Express routes
-  - [ ] Write integration tests for middleware
-
-- [ ] **Auth Service**
-  - [ ] Create user registration logic
-  - [ ] Create email verification logic
-  - [ ] Create login logic with validation
-  - [ ] Create getCurrentUser logic
-  - [ ] Implement error handling and validation
-  - [ ] Write comprehensive unit tests
-
-- [ ] **Auth Controller & Routes**
-  - [ ] Create POST /api/v1/auth/register endpoint
-  - [ ] Create GET /api/v1/auth/verify-email endpoint
-  - [ ] Create POST /api/v1/auth/login endpoint
-  - [ ] Create GET /api/v1/auth/me endpoint
-  - [ ] Add proper request validation
-  - [ ] Add API documentation in code
-
-- [ ] **Email Verification**
-  - [ ] Set up email service (SendGrid or Nodemailer)
-  - [ ] Create email template for verification
-  - [ ] Test email sending locally
-  - [ ] Add email verification workflow
-  - [ ] Create email error handling
-
-- [ ] **Password Reset (Phase 1A+)**
-  - [ ] Create POST /api/v1/auth/forgot-password endpoint
-  - [ ] Create POST /api/v1/auth/reset-password endpoint
-  - [ ] Create password reset email template
-  - [ ] Implement password reset validation
-
-#### Frontend Tasks (2 developers)
-- [ ] **Auth Pages & Components**
-  - [ ] Create Login page component
-  - [ ] Create Register page component
-  - [ ] Create Email Verification page
-  - [ ] Create Password Reset pages
-  - [ ] Add form validation
-  - [ ] Add error message handling
-  - [ ] Add loading states
-
-- [ ] **Auth Service & HTTP Client**
-  - [ ] Set up Axios HTTP client with interceptors
-  - [ ] Create auth service (register, login, verify email)
-  - [ ] Implement token storage (localStorage)
-  - [ ] Implement auth state management in Redux
-  - [ ] Add automatic token refresh logic
-  - [ ] Create error handling for auth failures
-
-- [ ] **Auth UI Components**
-  - [ ] Create Input component with validation
-  - [ ] Create Button component with loading state
-  - [ ] Create Alert/Toast component for notifications
-  - [ ] Create Loading spinner
-  - [ ] Create error display component
-  - [ ] Write component tests
-
-- [ ] **Navigation & Protected Routes**
-  - [ ] Set up React Router v6
-  - [ ] Create ProtectedRoute component
-  - [ ] Create PublicRoute component
-  - [ ] Set up navigation structure
-  - [ ] Add redirect logic for unauthorized access
-
-#### QA (1 engineer)
-- [ ] **Auth Testing Plan**
-  - [ ] Create test scenarios for registration
-  - [ ] Create test scenarios for login
-  - [ ] Create test scenarios for email verification
-  - [ ] Document edge cases and error conditions
-  - [ ] Create manual testing checklist
-
-**Milestone: Week 2 Completion**
-- [ ] User can register with email and password
-- [ ] Registration sends verification email
-- [ ] User can verify email with token
-- [ ] User can login with credentials
-- [ ] JWT tokens are issued and validated
-- [ ] Protected routes enforce authentication
-- [ ] All tests passing with 80%+ coverage
-
----
-
-### Week 3-4: Community Management & User Profiles
-
-#### Backend Tasks (3 developers)
-
-**Community Service**
-- [ ] **Community CRUD Operations**
-  - [ ] Implement createCommunity service
-  - [ ] Implement getCommunity service
-  - [ ] Implement getCommunities (list) service
-  - [ ] Implement updateCommunity service
-  - [ ] Implement deleteCommunity service (soft delete)
-  - [ ] Add proper error handling
-  - [ ] Write unit tests (80%+ coverage)
-
-- [ ] **Community Membership**
-  - [ ] Implement joinCommunity service
-  - [ ] Implement leaveCommunity service
-  - [ ] Implement getUserCommunities service
-  - [ ] Implement domain-based verification logic
-  - [ ] Add membership status management (pending, verified, banned)
-  - [ ] Write integration tests
-
-- [ ] **Community Admin Features**
-  - [ ] Implement admin role assignment
-  - [ ] Implement admin permission checks
-  - [ ] Implement bulk user invitations
-  - [ ] Implement community settings management
-  - [ ] Add audit logging for admin actions
-
-- [ ] **Community API Endpoints**
-  - [ ] POST /api/v1/communities (create)
-  - [ ] GET /api/v1/communities (list)
-  - [ ] GET /api/v1/communities/:id (get single)
-  - [ ] PUT /api/v1/communities/:id (update)
-  - [ ] DELETE /api/v1/communities/:id (delete)
-  - [ ] POST /api/v1/communities/:id/join (join)
-  - [ ] POST /api/v1/communities/:id/members (list members)
-  - [ ] Add API documentation
-
-**User Profile Service**
-- [ ] **User Profile Management**
-  - [ ] Implement getUser service
-  - [ ] Implement updateProfile service
-  - [ ] Implement getUserPublicProfile service
-  - [ ] Implement profile photo upload
-  - [ ] Write unit tests
-
-- [ ] **User API Endpoints**
-  - [ ] GET /api/v1/users/:id (get profile)
-  - [ ] PUT /api/v1/users/:id (update profile)
-  - [ ] GET /api/v1/users/:id/public (public profile)
-  - [ ] POST /api/v1/users/:id/avatar (upload avatar)
-  - [ ] Add proper validation
-
-- [ ] **File Upload Infrastructure**
-  - [ ] Set up cloud storage (S3, Azure Blob, or local)
-  - [ ] Create file upload utility
-  - [ ] Implement image compression
-  - [ ] Add file size validation
-  - [ ] Create file deletion logic
-
-#### Frontend Tasks (2 developers)
-
-**Community Pages & Components**
-- [ ] **Community Discovery**
-  - [ ] Create Communities Browse page
-  - [ ] Create Community List component
-  - [ ] Create Community Card component
-  - [ ] Implement community search
-  - [ ] Add pagination
-  - [ ] Write component tests
-
-- [ ] **Community Management**
-  - [ ] Create Create Community page
-  - [ ] Create Community Details page
-  - [ ] Create Community Settings page (admin)
-  - [ ] Create Edit Community form
-  - [ ] Add form validation
-  - [ ] Implement error handling
-
-- [ ] **Community Join/Leave**
-  - [ ] Create Join Community UI
-  - [ ] Create Join Community modal
-  - [ ] Implement join workflow
-  - [ ] Add success/error feedback
-  - [ ] Create leave confirmation
-
-**User Profile Pages & Components**
-- [ ] **User Profile Pages**
-  - [ ] Create User Profile page
-  - [ ] Create Edit Profile page
-  - [ ] Create Profile Picture upload component
-  - [ ] Create Profile completeness indicator
-  - [ ] Add form validation
-
-- [ ] **User Profile Components**
-  - [ ] Create Profile Header component
-  - [ ] Create Profile Stats component (transactions, ratings)
-  - [ ] Create Profile Photo Upload component
-  - [ ] Create Profile Edit Form
-  - [ ] Write component tests
-
-**Navigation & Routing**
-- [ ] **Frontend Navigation**
-  - [ ] Create authenticated navigation header
-  - [ ] Add community selector in navigation
-  - [ ] Create user dropdown menu
-  - [ ] Add breadcrumb navigation
-  - [ ] Implement mobile-responsive navigation
-
-#### QA (1 engineer)
-- [ ] **Community & User Testing**
-  - [ ] Create community CRUD test scenarios
-  - [ ] Create community membership test scenarios
-  - [ ] Create user profile test scenarios
-  - [ ] Test all validation rules
-  - [ ] Document edge cases
-
-**Milestone: Week 3-4 Completion**
-- [ ] Communities can be created by registered users
-- [ ] Users can browse and join communities
-- [ ] Email domain verification works
-- [ ] User profiles can be viewed and edited
-- [ ] Community membership management works
-- [ ] Admin functions for community management
-- [ ] All tests passing with 80%+ coverage
-
----
-
-### Week 5-6: Marketplace Listings & Search
-
-#### Backend Tasks (3 developers)
-
-**Listing Service**
-- [ ] **Listing CRUD**
-  - [ ] Implement createListing service
-  - [ ] Implement getListing service
-  - [ ] Implement updateListing service
-  - [ ] Implement deleteListing service (soft delete)
-  - [ ] Implement markListingSold service
-  - [ ] Add input validation
-  - [ ] Write unit tests
-
-- [ ] **Listing Search & Filtering**
-  - [ ] Implement full-text search on listings
-  - [ ] Implement category filtering
-  - [ ] Implement price range filtering
-  - [ ] Implement condition filtering
-  - [ ] Implement listing type filtering
-  - [ ] Implement sorting (newest, lowest price, highest price)
-  - [ ] Add pagination support
-  - [ ] Write search tests
-
-- [ ] **Listing Seller Operations**
-  - [ ] Implement getSellerListings service
-  - [ ] Implement listing analytics (views, inquiries)
-  - [ ] Implement batch operations (delete multiple)
-  - [ ] Add seller-specific validation
-
-- [ ] **Listing Images**
-  - [ ] Implement multiple image upload
-  - [ ] Implement image ordering
-  - [ ] Implement image deletion
-  - [ ] Add image optimization
-  - [ ] Add image CDN integration
-
-- [ ] **Listing API Endpoints**
-  - [ ] POST /api/v1/communities/:id/listings (create)
-  - [ ] GET /api/v1/listings/:id (get single)
-  - [ ] GET /api/v1/communities/:id/listings/search (search)
-  - [ ] PUT /api/v1/listings/:id (update)
-  - [ ] DELETE /api/v1/listings/:id (delete)
-  - [ ] POST /api/v1/listings/:id/mark-sold (mark sold)
-  - [ ] GET /api/v1/users/:id/listings (seller listings)
-
-**Listing Categories & Metadata**
-- [ ] **Category System**
-  - [ ] Define listing categories (Items, Benefits, Services)
-  - [ ] Create subcategories
-  - [ ] Implement category filtering
-  - [ ] Create category suggestions
-
-#### Frontend Tasks (2 developers)
-
-**Listing Browse & Search**
-- [ ] **Marketplace Pages**
-  - [ ] Create Marketplace Browse page
-  - [ ] Create Listing List component
-  - [ ] Create Listing Card component
-  - [ ] Implement search bar
-  - [ ] Add advanced filters
-  - [ ] Add sorting options
-  - [ ] Implement pagination
-
-- [ ] **Listing Search Components**
-  - [ ] Create Search Bar component
-  - [ ] Create Filters Sidebar component
-  - [ ] Create Category Filter
-  - [ ] Create Price Range Filter
-  - [ ] Create Condition Filter
-  - [ ] Add filter reset button
-
-- [ ] **Listing Detail Page**
-  - [ ] Create Listing Detail page
-  - [ ] Create Image Gallery component
-  - [ ] Create Listing Info component
-  - [ ] Create Seller Info component
-  - [ ] Add "Message Seller" button
-  - [ ] Add "Save Listing" button
-  - [ ] Show similar listings
-
-**Listing Creation & Management**
-- [ ] **Create Listing Page**
-  - [ ] Create Create Listing form
-  - [ ] Create Upload Images component
-  - [ ] Create Preview before posting
-  - [ ] Add form validation
-  - [ ] Add auto-save drafts
-  - [ ] Implement success confirmation
-
-- [ ] **Manage Listings Page**
-  - [ ] Create My Listings page
-  - [ ] Create Listing Edit page
-  - [ ] Create Quick Edit modal
-  - [ ] Implement mark as sold
-  - [ ] Add delete confirmation
-  - [ ] Show listing performance stats
-
-- [ ] **Listing Components**
-  - [ ] Create Image Uploader component
-  - [ ] Create Category Selector component
-  - [ ] Create Price Input component
-  - [ ] Create Listing Form component
-  - [ ] Write component tests
-
-#### QA (1 engineer)
-- [ ] **Listing Testing**
-  - [ ] Create listing CRUD test scenarios
-  - [ ] Create search and filter test scenarios
-  - [ ] Create listing image test scenarios
-  - [ ] Test all validation rules
-  - [ ] Performance test: search with 10,000+ listings
-
-**Milestone: Week 5-6 Completion**
-- [ ] Users can create, edit, and delete listings
-- [ ] Support for items, benefits, and services
-- [ ] Search and filtering work properly
-- [ ] Image upload and display works
-- [ ] Seller can manage their listings
-- [ ] All tests passing with 80%+ coverage
-
----
-
-### Week 7-8: Messaging & Messaging UI (Prep for Transactions)
-
-#### Backend Tasks (3 developers)
-
-**Messaging Service**
-- [ ] **Conversation Management**
-  - [ ] Implement createOrGetConversation service
-  - [ ] Implement getConversations service (user's chats)
-  - [ ] Implement getConversationDetails service
-  - [ ] Implement archiveConversation service
-  - [ ] Add conversation status management
-  - [ ] Write unit tests
-
-- [ ] **Message Operations**
-  - [ ] Implement sendMessage service
-  - [ ] Implement getMessage service
-  - [ ] Implement getMessages service (conversation history)
-  - [ ] Implement deleteMessage service (soft delete)
-  - [ ] Implement markAsRead service
-  - [ ] Add message attachments support
-  - [ ] Write unit tests
-
-- [ ] **Message Search**
-  - [ ] Implement search within conversation
-  - [ ] Implement message indexing
-  - [ ] Add message filters
-
-- [ ] **Messaging API Endpoints**
-  - [ ] POST /api/v1/conversations (create/get)
-  - [ ] GET /api/v1/conversations (list user's conversations)
-  - [ ] GET /api/v1/conversations/:id (get single)
-  - [ ] GET /api/v1/conversations/:id/messages (get messages)
-  - [ ] POST /api/v1/conversations/:id/messages (send message)
-  - [ ] DELETE /api/v1/conversations/:id/messages/:msgId (delete)
-  - [ ] PUT /api/v1/conversations/:id/mark-read (mark as read)
-
-**WebSocket Infrastructure (Foundation)**
-- [ ] **Real-time Messaging Setup**
-  - [ ] Install Socket.io library
-  - [ ] Create WebSocket event handlers structure
-  - [ ] Implement connection/disconnect handlers
-  - [ ] Plan for message broadcasting (not implemented yet)
-  - [ ] Create WebSocket namespace for messaging
-  - [ ] Document WebSocket events
-
-#### Frontend Tasks (2 developers)
-
-**Messaging UI Components**
-- [ ] **Messaging Pages**
-  - [ ] Create Inbox page
-  - [ ] Create Conversation page
-  - [ ] Create Message thread view
-
-- [ ] **Messaging Components**
-  - [ ] Create Conversations List component
-  - [ ] Create Conversation Card component
-  - [ ] Create Message Bubble component
-  - [ ] Create Message Input component
-  - [ ] Create Message Timestamp component
-  - [ ] Create Attachment Preview component
-
-- [ ] **Messaging Features (UI Layer)**
-  - [ ] Add message read indicators
-  - [ ] Add typing indicators (prep for WebSocket)
-  - [ ] Add unread count badges
-  - [ ] Add last message preview in list
-  - [ ] Add conversation search
-
-**Messaging State Management**
-- [ ] **Redux Slices**
-  - [ ] Create messaging slice
-  - [ ] Manage conversations in state
-  - [ ] Manage messages in state
-  - [ ] Manage unread counts
-
-- [ ] **HTTP Integration**
-  - [ ] Create messaging service (HTTP calls)
-  - [ ] Implement fetchConversations
-  - [ ] Implement fetchMessages
-  - [ ] Implement sendMessage
-  - [ ] Implement markAsRead
-
-#### DevOps/Infrastructure (1 engineer)
-- [ ] **Performance Optimization**
-  - [ ] Set up message pagination
-  - [ ] Implement message caching strategy
-  - [ ] Optimize database queries for messages
-  - [ ] Add database indexes for message queries
-
-#### QA (1 engineer)
-- [ ] **Messaging Testing**
-  - [ ] Create messaging CRUD test scenarios
-  - [ ] Test message search functionality
-  - [ ] Load test: 1000 messages in conversation
-  - [ ] Test edge cases (large attachments, special characters)
-
-**Milestone: Week 7-8 Completion**
-- [ ] Messaging system infrastructure complete
-- [ ] Users can create conversations
-- [ ] Users can send/receive messages
-- [ ] Message history is preserved
-- [ ] Unread count tracking works
-- [ ] All HTTP-based messaging works
-- [ ] WebSocket foundation laid (not integrated yet)
-- [ ] All tests passing with 80%+ coverage
-
----
-
-## End of Phase 1A (Weeks 1-8)
-
-### Phase 1A Deliverables:
-✅ Complete backend REST API with 30+ endpoints
-✅ Production-ready authentication system
-✅ Community management system
-✅ User profiles and settings
-✅ Full marketplace with listings
-✅ Advanced search and filtering
-✅ Messaging system (HTTP-based)
-✅ Complete React web application
-✅ All core features functional
-✅ 80%+ test coverage
-✅ Docker setup complete
-✅ CI/CD pipeline operational
-
-### Phase 1A Success Criteria:
-- [ ] 100+ users registered (internal testing team)
-- [ ] 50+ listings created
-- [ ] API response time <200ms (95th percentile)
-- [ ] All unit tests passing
-- [ ] Zero critical security issues
-- [ ] Web app fully functional and responsive
-
----
-
-## PHASE 1B: Mobile App & Transaction Features (Weeks 9-12)
-
-### Week 9: Mobile Setup & Duplicate Features
-
-#### Mobile Team (2 developers)
-
-**React Native Project Setup**
-- [ ] **Mobile Project Initialization**
-  - [ ] Initialize React Native project (Expo or bare)
-  - [ ] Configure TypeScript for React Native
-  - [ ] Set up folder structure
-  - [ ] Create .env and configuration
-  - [ ] Configure ESLint and Prettier
-  - [ ] Set up Jest for mobile testing
-
-- [ ] **Mobile Navigation**
-  - [ ] Install React Navigation
-  - [ ] Set up navigation structure (tab, stack, drawer)
-  - [ ] Create bottom tab navigation (Home, Search, Inbox, Profile)
-  - [ ] Create navigation state management
-  - [ ] Implement navigation permissions for Android/iOS
-
-- [ ] **Mobile HTTP Client**
-  - [ ] Configure Axios for React Native
-  - [ ] Set up interceptors for auth tokens
-  - [ ] Create API service layer
-  - [ ] Implement error handling
-  - [ ] Set up request/response logging
-
-- [ ] **Mobile State Management**
-  - [ ] Set up Redux Toolkit
-  - [ ] Create auth slice
-  - [ ] Create user slice
-  - [ ] Create community slice
-  - [ ] Create app slices
-
-**Authentication (Mobile)**
-- [ ] **Auth UI Components**
-  - [ ] Create Login screen
-  - [ ] Create Register screen
-  - [ ] Create Email Verification screen
-  - [ ] Create Navigation guard for auth
-  - [ ] Implement biometric login (optional for MVP+)
-
-- [ ] **Auth Features**
-  - [ ] Implement registration flow
-  - [ ] Implement login flow
-  - [ ] Implement email verification
-  - [ ] Implement token storage (AsyncStorage)
-  - [ ] Implement auto-login on app start
-  - [ ] Implement logout
-
-**User Profile (Mobile)**
-- [ ] **Profile Screens & Components**
-  - [ ] Create Profile screen
-  - [ ] Create Edit Profile screen
-  - [ ] Create Profile Picture Upload
-  - [ ] Create Settings screen
-  - [ ] Create About/Help screen
-
-- [ ] **Profile Features**
-  - [ ] View user profile
-  - [ ] Edit profile information
-  - [ ] Upload profile picture
-  - [ ] Change password
-  - [ ] Logout functionality
-
-#### Backend Tasks (2 developers)
-- [ ] **API Performance Optimization**
-  - [ ] Optimize queries for mobile (reduce payload size)
-  - [ ] Implement response compression
-  - [ ] Add API caching headers
-  - [ ] Implement rate limiting for mobile
-  - [ ] Add API versioning support
-
-#### QA (1 engineer)
-- [ ] **Mobile Testing Infrastructure**
-  - [ ] Set up Android emulator testing
-  - [ ] Set up iOS simulator testing
-  - [ ] Create mobile testing checklist
-  - [ ] Document device compatibility
-
-**Milestone: Week 9 Completion**
-- [ ] React Native app runs on Android
-- [ ] React Native app runs on iOS
-- [ ] User can register and login
-- [ ] User profile functional
-- [ ] Navigation works
-- [ ] Duplicate features working
-
----
-
-### Week 10: Mobile Marketplace & Communities
-
-#### Mobile Team (2 developers)
-
-**Marketplace (Mobile)**
-- [ ] **Browse Listings Screen**
-  - [ ] Create Marketplace screen
-  - [ ] Create Listing List component
-  - [ ] Create Listing Card component
-  - [ ] Implement infinite scroll/pagination
-  - [ ] Add search bar
-  - [ ] Add basic filters
-
-- [ ] **Listing Detail Screen**
-  - [ ] Create Listing Detail screen
-  - [ ] Create Image carousel
-  - [ ] Create Listing info section
-  - [ ] Create Seller info section
-  - [ ] Add "Message Seller" button
-  - [ ] Add "Save" button
-
-- [ ] **Create Listing Screen**
-  - [ ] Create Create Listing screen
-  - [ ] Create Form with validation
-  - [ ] Create Image picker
-  - [ ] Add preview
-  - [ ] Implement success confirmation
-
-- [ ] **Manage Listings Screen**
-  - [ ] Create My Listings screen
-  - [ ] Create Quick edit capability
-  - [ ] Add delete confirmation
-  - [ ] Show listing stats
-
-**Communities (Mobile)**
-- [ ] **Communities Screen**
-  - [ ] Create Communities browse screen
-  - [ ] Create Community List component
-  - [ ] Create Community Card component
-  - [ ] Add search functionality
-
-- [ ] **Community Detail Screen**
-  - [ ] Create Community Details screen
-  - [ ] Show member count
-  - [ ] Show community info
-  - [ ] Create Join/Leave button
-  - [ ] Show community rules
-
-- [ ] **Create Community Screen**
-  - [ ] Create Create Community screen
-  - [ ] Create Community Form
-  - [ ] Add validation
-  - [ ] Implement success flow
-
-#### QA (1 engineer)
-- [ ] **Mobile Marketplace Testing**
-  - [ ] Test listing CRUD on mobile
-  - [ ] Test search and filters on mobile
-  - [ ] Test image upload/display
-  - [ ] Test pagination/infinite scroll
-  - [ ] Performance test: large list rendering
-
-**Milestone: Week 10 Completion**
-- [ ] Mobile marketplace fully functional
-- [ ] User can create, edit, delete listings
-- [ ] Community management on mobile
-- [ ] All marketplace features on mobile
-- [ ] Image upload works on mobile
-
----
-
-### Week 11: Mobile Messaging & Backend Transactions
-
-#### Mobile Team (2 developers)
-
-**Messaging (Mobile)**
-- [ ] **Inbox Screen**
-  - [ ] Create Inbox screen
-  - [ ] Create Conversation List component
-  - [ ] Create unread count badge
-  - [ ] Add conversation search
-  - [ ] Implement pull-to-refresh
-
-- [ ] **Chat Screen**
-  - [ ] Create Chat/Conversation screen
-  - [ ] Create Message List component
-  - [ ] Create Message Input component
-  - [ ] Implement auto-scroll to latest
-  - [ ] Add message timestamps
-  - [ ] Add keyboard handling
-
-- [ ] **Messaging Features**
-  - [ ] Send text messages
-  - [ ] Mark messages as read
-  - [ ] Archive conversations
-  - [ ] Show unread messages differently
-  - [ ] Add loading states
-
-#### Backend Tasks (3 developers)
-
-**Rating & Trust System**
-- [ ] **Rating Service**
-  - [ ] Implement createRating service
-  - [ ] Implement getUserRatings service
-  - [ ] Implement ratingValidation (can only rate after transaction)
-  - [ ] Implement duplicate rating prevention
-  - [ ] Write unit tests
-
-- [ ] **Trust Score Calculation**
-  - [ ] Implement trust score algorithm
-  - [ ] Implement calculateTrustScore function
-  - [ ] Implement batch score update job
-  - [ ] Add category-specific ratings (communication, honesty, etc.)
-  - [ ] Write unit tests
-
-- [ ] **Rating API Endpoints**
-  - [ ] POST /api/v1/ratings (create rating)
-  - [ ] GET /api/v1/users/:id/ratings (get user ratings)
-  - [ ] GET /api/v1/users/:id/trust-score (get trust score)
-  - [ ] GET /api/v1/ratings/recent (get recent ratings)
-
-- [ ] **Transaction Tracking**
-  - [ ] Create transactions table (basic)
-  - [ ] Implement createTransaction service
-  - [ ] Implement transaction status tracking
-  - [ ] Link ratings to transactions
-
-**Moderation System (Foundation)**
-- [ ] **Reporting Service**
-  - [ ] Implement createReport service
-  - [ ] Implement getOpenReports service
-  - [ ] Implement resolveReport service
-  - [ ] Implement report validation
-  - [ ] Write unit tests
-
-- [ ] **Report API Endpoints**
-  - [ ] POST /api/v1/reports (create report)
-  - [ ] GET /api/v1/reports (list reports - admin only)
-  - [ ] PUT /api/v1/reports/:id (resolve report - admin only)
-  - [ ] GET /api/v1/reports/queue (moderation queue - admin only)
-
-- [ ] **Moderation Features**
-  - [ ] Implement report categorization
-  - [ ] Implement priority levels
-  - [ ] Implement assignment to moderators
-  - [ ] Add resolution tracking
-
-**WebSocket Integration**
-- [ ] **Real-time Messaging**
-  - [ ] Implement Socket.io event handlers
-  - [ ] Implement message broadcasting
-  - [ ] Implement typing indicators
-  - [ ] Implement read receipts
-  - [ ] Implement connection management
-  - [ ] Add error handling for disconnections
-  - [ ] Write integration tests
-
-#### QA (1 engineer)
-- [ ] **Transaction Testing**
-  - [ ] Test rating workflow
-  - [ ] Test trust score calculation
-  - [ ] Test reporting system
-  - [ ] Load test WebSocket connections
-  - [ ] Test message delivery
-
-**Milestone: Week 11 Completion**
-- [ ] Mobile messaging fully functional
-- [ ] Real-time messaging works (WebSocket)
-- [ ] Rating system complete
-- [ ] Trust scores calculated
-- [ ] Reporting system functional
-- [ ] WebSocket integration tested
-
----
-
-### Week 12: Polish, Testing & Deployment Prep
-
-#### Frontend Team (2 developers)
-
-**Frontend Polish & Optimization**
-- [ ] **Performance Optimization**
-  - [ ] Implement code splitting
-  - [ ] Lazy load components
-  - [ ] Optimize images
-  - [ ] Implement caching strategies
-  - [ ] Reduce bundle size
-  - [ ] Run Lighthouse audit (target: >90)
-
-- [ ] **Error Handling & UX**
-  - [ ] Implement global error boundary
-  - [ ] Add retry mechanisms
-  - [ ] Improve error messages
-  - [ ] Add loading states everywhere
-  - [ ] Implement offline detection
-  - [ ] Add fallback UI
-
-- [ ] **Feature Completeness**
-  - [ ] Implement all missing edge cases
-  - [ ] Add empty states for lists
-  - [ ] Add placeholder content
-  - [ ] Implement proper 404 pages
-  - [ ] Add breadcrumb navigation
-
-- [ ] **Accessibility**
-  - [ ] Add ARIA labels
-  - [ ] Implement keyboard navigation
-  - [ ] Test with screen readers
-  - [ ] Check color contrast
-  - [ ] Add alt text to images
-
-#### Mobile Team (2 developers)
-
-**Mobile Polish & Optimization**
-- [ ] **Performance Optimization**
-  - [ ] Reduce app bundle size
-  - [ ] Optimize image delivery
-  - [ ] Implement lazy loading
-  - [ ] Test on low-end devices
-  - [ ] Optimize startup time
-  - [ ] Battery usage optimization
-
-- [ ] **Native Features**
-  - [ ] Implement push notifications
-  - [ ] Implement background sync
-  - [ ] Implement camera access for images
-  - [ ] Implement file picker
-  - [ ] Add haptic feedback
-  - [ ] Test permissions handling
-
-- [ ] **Build & Store Prep**
-  - [ ] Create app icons
-  - [ ] Create splash screens
-  - [ ] Create app store screenshots
-  - [ ] Write app descriptions
-  - [ ] Create privacy policy
-  - [ ] Create terms of service
-  - [ ] Configure signing certificates
-
-#### Backend Team (3 developers)
-
-**Backend Optimization & Security**
-- [ ] **Security Hardening**
-  - [ ] Implement rate limiting
-  - [ ] Implement request validation
-  - [ ] Add SQL injection prevention
-  - [ ] Implement CSRF protection
-  - [ ] Add security headers
-  - [ ] Run security audit
-  - [ ] Fix all vulnerabilities
-
-- [ ] **Performance Optimization**
-  - [ ] Optimize database queries
-  - [ ] Add proper indexing
-  - [ ] Implement query result caching
-  - [ ] Optimize API response payloads
-  - [ ] Add compression middleware
-  - [ ] Profile and optimize bottlenecks
-
-- [ ] **Monitoring & Logging**
-  - [ ] Implement comprehensive logging
-  - [ ] Set up error tracking (Sentry)
-  - [ ] Add performance monitoring
-  - [ ] Create dashboard for metrics
-  - [ ] Set up alerts for errors
-  - [ ] Document logging standards
-
-- [ ] **Documentation**
-  - [ ] Complete API documentation (OpenAPI/Swagger)
-  - [ ] Create database schema documentation
-  - [ ] Write deployment guide
-  - [ ] Create troubleshooting guide
-  - [ ] Document environment setup
-  - [ ] Create architecture documentation
-
-#### DevOps/Infrastructure (1 engineer)
-
-**Deployment & Infrastructure**
-- [ ] **Production Environment Setup**
-  - [ ] Set up production database
-  - [ ] Set up production Redis cache
-  - [ ] Configure CDN for static assets
-  - [ ] Set up email service in production
-  - [ ] Configure file storage in production
-  - [ ] Set up backup systems
-
-- [ ] **CI/CD Pipeline Completion**
-  - [ ] Activate deployment workflow
-  - [ ] Set up staging environment
-  - [ ] Create deployment checklist
-  - [ ] Implement zero-downtime deployments
-  - [ ] Set up database migrations
-  - [ ] Configure rollback strategy
-
-- [ ] **Monitoring & Infrastructure**
-  - [ ] Set up health monitoring
-  - [ ] Configure alerts
-  - [ ] Set up log aggregation
-  - [ ] Configure APM (Application Performance Monitoring)
-  - [ ] Set up metrics dashboards
-  - [ ] Configure auto-scaling (if needed)
-
-#### QA Team (1 engineer)
-
-**Final Testing & Quality Assurance**
-- [ ] **Comprehensive Testing**
-  - [ ] Run full regression testing
-  - [ ] Run security testing
-  - [ ] Run performance testing
-  - [ ] Run load testing (1000+ concurrent users)
-  - [ ] Run browser compatibility testing
-  - [ ] Run device compatibility testing
-  - [ ] Run accessibility testing
-
-- [ ] **Launch Preparation**
-  - [ ] Create launch checklist
-  - [ ] Create incident response plan
-  - [ ] Document known issues
-  - [ ] Create user documentation
-  - [ ] Create FAQ
-  - [ ] Create support guide
-
-- [ ] **Post-Launch Plan**
-  - [ ] Create monitoring plan
-  - [ ] Create support escalation procedures
-  - [ ] Plan for early bug fixes
-  - [ ] Plan for feature iteration
-
-#### Product Manager & Design (2 people)
-
-**Launch & Marketing Prep**
-- [ ] **Launch Planning**
-  - [ ] Create launch timeline
-  - [ ] Prepare launch communications
-  - [ ] Create pitch deck
-  - [ ] Plan beta user recruitment
-  - [ ] Create success metrics dashboard
-  - [ ] Plan feedback collection
-
-**Milestone: Week 12 Completion - MVP Launch Ready**
-- [ ] ✅ All features complete
-- [ ] ✅ All tests passing (80%+ coverage)
-- [ ] ✅ Zero critical bugs
-- [ ] ✅ Performance optimized
-- [ ] ✅ Security hardened
-- [ ] ✅ Documentation complete
-- [ ] ✅ Deployment ready
-- [ ] ✅ Monitoring in place
-- [ ] ✅ Team trained
-- [ ] ✅ Ready for beta launch
-
----
-
-### Final Deliverables (End of Phase 1):
-
-**Backend:**
-- REST API with 40+ endpoints
-- Complete database schema with 12 tables
-- Authentication & authorization system
-- Community management system
-- Marketplace with search & filtering
-- Messaging system with WebSocket support
-- Rating & trust system
-- Moderation & reporting system
-- Comprehensive error handling
-- Rate limiting & security measures
-
-**Frontend:**
-- Complete React SPA
-- Responsive design (desktop & tablet)
-- Authentication pages
-- Community management
-- Marketplace with advanced search
-- User profiles & settings
-- Messaging interface
-- Admin dashboard (basic)
-- 80%+ test coverage
-
-**Mobile:**
-- Android app (Google Play ready)
-- iOS app (TestFlight ready)
-- All features from web app
-- Native mobile optimizations
-- Push notifications
-- Offline support
-- 80%+ test coverage
-
-**Infrastructure:**
-- Docker & Docker Compose setup
-- GitHub Actions CI/CD
-- Production-ready deployment
-- Monitoring & logging
-- Backup & disaster recovery
-- Security hardening
-
-**Documentation:**
-- API documentation (OpenAPI)
-- Database schema documentation
-- Deployment guide
-- User documentation
-- Architecture documentation
-
----
-
-## Success Metrics (End of Phase 1):
-
-### User Metrics
-- [ ] 100+ registered users
-- [ ] 50+ communities created
-- [ ] 80+ verified members
-- [ ] 50+ listings posted
-- [ ] 20+ transactions completed
-- [ ] 4.0+ average rating
-
-### Technical Metrics
-- [ ] 99%+ API uptime
-- [ ] <200ms API response time (95th percentile)
-- [ ] <3s web app load time
-- [ ] <2s mobile app load time
-- [ ] 80%+ code coverage
-- [ ] Zero critical security issues
-
-### Quality Metrics
-- [ ] All acceptance criteria met
-- [ ] All tests passing
-- [ ] Zero blocking bugs
-- [ ] <5 critical bugs open
-- [ ] Documentation complete
-- [ ] Performance targets met
-
----
-
-## Next Steps After Phase 1:
-
-1. **Internal Testing (Week 12)**
-   - Use internal team as beta users
-   - Collect feedback on all features
-   - Identify UX/UI improvements
-   - Document bugs for Phase 2
-
-2. **Beta Launch Preparation**
-   - Recruit beta users (100-200)
-   - Create beta testing program
-   - Set up feedback collection
-   - Plan communication strategy
-
-3. **Phase 2 Planning**
-   - Incorporate beta feedback
-   - Plan payment integration
-   - Plan AI features
-   - Plan scaling improvements
-   - Plan additional communities
+1. [Technical Setup & Architecture](#section-1-technical-setup--architecture)
+2. [Week 1-2: Foundation](#section-2-week-1-2-foundation)
+3. [Week 3-4: Community Management](#section-3-week-3-4-community-management)
+4. [Week 5-8: Marketplace](#section-4-week-5-8-marketplace)
+5. [Week 9-12: Transactions & Moderation](#section-5-week-9-12-transactions--moderation)
+6. [Testing & Quality Assurance](#section-6-testing--quality-assurance)
+7. [Deployment & Infrastructure](#section-7-deployment--infrastructure)
+8. [Team & Resource Planning](#section-8-team--resource-planning)
 
 ---
 
@@ -1253,50 +117,77 @@ circleexchange/
 └── README.md
 ```
 
-### 1.2 Tech Stack Selection
+### 1.2 Tech Stack Selection (Modern Stack)
 
-**Backend**
-- **Runtime**: Node.js 18+ with Express.js
+**Backend - Supabase Ecosystem**
+- **Platform**: Supabase (PostgreSQL + Auth + Realtime + Storage)
 - **Language**: TypeScript
-- **Database**: PostgreSQL 14+
-- **Cache**: Redis 7+
-- **Auth**: JWT (jsonwebtoken library)
-- **Email**: SendGrid or Nodemailer
-- **File Storage**: Azure Blob Storage or AWS S3
+- **Database**: Supabase PostgreSQL 14+ (with Vector extension)
+- **Authentication**: Clerk (JWT + OAuth + MFA + built-in UI)
+- **Cache**: Upstash Redis (Serverless, no infrastructure)
+- **Email**: Resend (Modern, developer-friendly email API)
+- **Payments**: Stripe (Payment processing + subscriptions)
+- **File Storage**: Supabase Storage (S3-compatible, easy integration)
+- **Vector DB**: Pinecone (Managed vector embeddings for AI features)
+- **Real-time Communication**: Supabase Realtime (WebSocket, no Socket.io needed)
 
-**Frontend**
-- **Framework**: React 18+
-- **Language**: TypeScript
-- **State Management**: Redux Toolkit
-- **HTTP Client**: Axios
-- **UI Library**: Material-UI v5
-- **Forms**: React Hook Form
+**Frontend - Vercel + Modern React**
+- **Framework**: React 18+ with TypeScript
+- **Build Tool**: Vite (5-10x faster than CRA)
+- **State Management**: Redux Toolkit (simplified with RTK Query)
+- **HTTP/API**: Axios with interceptors
+- **Styling**: Tailwind CSS (utility-first, production-ready)
+- **UI Components**: Material-UI or shadcn/ui
+- **Forms**: React Hook Form + Zod (type-safe validation)
+- **Authentication**: Clerk (pre-built components, no auth code needed)
+- **Deployment**: Vercel (optimized React deployment, serverless functions)
+- **Analytics**: PostHog (product analytics on frontend)
+- **Error Tracking**: Sentry (frontend error monitoring)
 - **Testing**: Jest + React Testing Library
 
-**Mobile**
-- **Framework**: React Native
-- **Navigation**: React Navigation
+**Mobile - React Native + Modern Services**
+- **Framework**: React Native with TypeScript
+- **Navigation**: React Navigation (stack, tab, drawer)
 - **State**: Redux Toolkit
-- **HTTP**: Axios
-- **UI**: Native Base or React Native Paper
+- **API Client**: Axios
+- **Authentication**: Clerk React Native SDK
+- **Payments**: Stripe Mobile SDK (for in-app purchases)
+- **Real-time**: Supabase Realtime (messages, notifications)
+- **Local Storage**: AsyncStorage + SQLite (for offline)
+- **Cloud Storage**: Supabase Storage SDK
+- **UI**: React Native Paper (Material Design)
+- **Analytics**: PostHog (mobile analytics)
+- **Error Tracking**: Sentry (mobile error reporting)
+- **Push Notifications**: Firebase Cloud Messaging (FCM)
 
-**Infrastructure**
-- **Cloud**: AWS / Azure / GCP
-- **Container**: Docker
-- **Orchestration**: Docker Compose (MVP), Kubernetes (Phase 2)
-- **CI/CD**: GitHub Actions
-- **Monitoring**: CloudWatch / Datadog (Phase 2)
+**Infrastructure & DevOps - Modern Cloud Services**
+- **Backend Computing**: Supabase Edge Functions (serverless)
+- **Frontend Hosting**: Vercel (optimized for React/Next.js)
+- **Database**: Supabase Postgres (managed, auto-scaling)
+- **API Gateway**: Supabase API (built-in REST/GraphQL)
+- **Domain**: Namecheap (domain registration)
+- **DNS & Security**: Cloudflare (DDoS protection, CDN, SSL)
+- **Version Control**: GitHub (code repository)
+- **CI/CD Pipeline**: GitHub Actions → Vercel (auto-deploy on push)
+- **Error/Performance Monitoring**: Sentry (errors, performance traces)
+- **Product Analytics**: PostHog (user behavior, funnels, heatmaps)
+- **Serverless Database**: Supabase (no ops needed)
+- **Caching Layer**: Upstash Redis (serverless cache)
 
-### 1.3 Environment Setup Checklist
+### 1.3 Environment Setup Checklist (Modern Setup)
 
 ```bash
 # Prerequisites to install before starting
 - Node.js 18+ (npm or yarn)
-- PostgreSQL 14+
-- Redis 7+ (optional for MVP, but recommended)
-- Docker & Docker Compose
 - Git
 - VS Code / IDE
+- Vercel CLI (for frontend deployment)
+- Supabase CLI (for backend management)
+
+# No need to install locally:
+# - PostgreSQL (managed by Supabase)
+# - Redis (managed by Upstash)
+# - Docker (optional, using Supabase instead)
 
 # Repository initialization
 git init circleexchange
@@ -1306,117 +197,238 @@ git config user.email "dev@circleexchange.com"
 
 # Create main directory structure
 mkdir backend frontend mobile docs
-touch README.md docker-compose.yml .gitignore
+touch README.md .gitignore
 
 # Initialize Node projects
 cd backend && npm init -y
 cd ../frontend && npm init -y
 cd ../mobile && npm init -y
 cd ..
+
+# Install Supabase CLI for backend management
+npm install -g supabase
+
+# Install Vercel CLI for frontend deployment
+npm install -g vercel
+
+# Create Supabase project (alternative to local Docker setup)
+# 1. Go to https://supabase.com
+# 2. Create new project
+# 3. Note the API URL and API Key
+# 4. Enable Auth providers (Google, GitHub, etc.)
+
+# Create Clerk project (authentication)
+# 1. Go to https://dashboard.clerk.com
+# 2. Create new application
+# 3. Generate API keys
+
+# Create Stripe account (payments)
+# 1. Go to https://stripe.com
+# 2. Create account
+# 3. Generate API keys (publishable + secret)
+
+# Create Resend account (email)
+# 1. Go to https://resend.com
+# 2. Sign up
+# 3. Verify domain or use default resend.dev domain
+
+# Setup Cloudflare (DNS)
+# 1. Add domain to Cloudflare
+# 2. Update nameservers at Namecheap
+# 3. Configure proxy settings
+
+# Create Pinecone account (vector DB)
+# 1. Go to https://www.pinecone.io
+# 2. Create account
+# 3. Create index for embeddings
+
+# Create PostHog account (analytics)
+# 1. Go to https://posthog.com
+# 2. Sign up
+# 3. Get project API key
+
+# Create Sentry account (error tracking)
+# 1. Go to https://sentry.io
+# 2. Create organization
+# 3. Create projects for frontend/backend/mobile
 ```
 
-### 1.4 Docker Compose Setup
+### 1.3b Environment Variables Setup
 
-```yaml
-# docker-compose.yml
-version: '3.9'
+```bash
+# Create .env files for each project
 
-services:
-  postgres:
-    image: postgres:14-alpine
-    container_name: circleexchange-db
-    environment:
-      POSTGRES_USER: circleexchange
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
-      POSTGRES_DB: circleexchange_dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U circleexchange"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+# backend/.env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
 
-  redis:
-    image: redis:7-alpine
-    container_name: circleexchange-cache
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+CLERK_SECRET_KEY=your_clerk_secret_key
+CLERK_API_KEY=your_clerk_api_key
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: docker/Dockerfile
-    container_name: circleexchange-api
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: circleexchange
-      DB_PASSWORD: ${DB_PASSWORD:-dev_password}
-      DB_NAME: circleexchange_dev
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-dev_secret_key_change_in_production}
-      PORT: 3000
-    ports:
-      - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/src:/app/src
-    command: npm run dev
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_PUBLIC_KEY=your_stripe_public_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        REACT_APP_API_URL: http://localhost:3000
-    container_name: circleexchange-web
-    ports:
-      - "3001:3000"
-    volumes:
-      - ./frontend/src:/app/src
-    depends_on:
-      - backend
+RESEND_API_KEY=your_resend_api_key
 
-volumes:
-  postgres_data:
-  redis_data:
+UPSTASH_REDIS_URL=your_upstash_redis_url
+UPSTASH_REDIS_TOKEN=your_upstash_redis_token
+
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_NAME=circleexchange
+
+SENTRY_DSN=your_sentry_dsn_backend
+
+POSTHOG_API_KEY=your_posthog_api_key
+POSTHOG_API_HOST=https://app.posthog.com
+
+NODE_ENV=development
+PORT=3000
+
+# frontend/.env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_public_key
+
+VITE_API_URL=http://localhost:3000
+
+VITE_SENTRY_DSN=your_sentry_dsn_frontend
+
+VITE_POSTHOG_API_KEY=your_posthog_api_key
+
+# mobile/.env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
+CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+
+STRIPE_PUBLISHABLE_KEY=your_stripe_public_key
+
+PINECONE_API_KEY=your_pinecone_api_key
+
+SENTRY_DSN=your_sentry_dsn_mobile
+
+POSTHOG_API_KEY=your_posthog_api_key
+```
+
+### 1.4 Supabase + Vercel Deployment Setup
+
+Instead of Docker Compose, we use managed services:
+
+```bash
+# Supabase Backend Setup (managed PostgreSQL + Auth)
+# 1. Create Supabase project at https://supabase.com
+# 2. Initialize local Supabase (optional for development)
+supabase init
+
+# 2. Create auth providers (Google, GitHub, etc.)
+# - Go to Supabase Dashboard → Authentication → Providers
+# - Configure OAuth apps
+
+# 3. Set up database schema via Supabase SQL Editor
+# - Tables: users, communities, listings, conversations, messages, etc.
+# - All managed by Supabase (no manual PostgreSQL needed)
+
+# 4. Enable Realtime for specific tables (messaging, notifications)
+# - Supabase Dashboard → Realtime → Add tables
+
+# Vercel Frontend Deployment
+# 1. Connect GitHub repo to Vercel
+# 2. Configure environment variables
+# 3. Auto-deploy on push to main branch
+
+# Upstash Redis (for caching, if needed)
+# - Created at https://console.upstash.com
+# - Serverless, no infrastructure management
+
+# Clerk Authentication Setup
+# 1. Create Clerk project at https://dashboard.clerk.com
+# 2. Configure sign-in & sign-up pages
+# 3. Add OAuth providers
+# 4. Get API keys and add to .env
+
+# Email Setup (Resend)
+# 1. Create account at https://resend.com
+# 2. Verify domain (or use resend.dev for testing)
+# 3. Get API key
+
+# Payment Setup (Stripe)
+# 1. Create account at https://stripe.com
+# 2. Create products & prices in Stripe Dashboard
+# 3. Webhooks: Create endpoint for payment events
+```
+
+**Comparison: Docker Compose vs Modern Stack**
+
+| Aspect | Docker Compose | Modern Stack (Supabase) |
+|--------|----------------|-----------------------|
+| **Database** | Local PostgreSQL | Managed Supabase |
+| **Auth** | JWT (DIY) | Clerk (managed) |
+| **Redis** | Local Redis | Upstash (serverless) |
+| **Email** | SendGrid/Nodemailer | Resend (simple API) |
+| **Storage** | Local/S3 | Supabase Storage |
+| **Deployment** | Manual provisioning | Vercel (auto-deploy) |
+| **Scaling** | Manual | Automatic |
+| **Operations** | High (manage DBs) | Low (managed services) |
+| **Cost** | Server costs | Pay-per-use |
+| **Time to Deploy** | Days | Hours |
+
+**For Development (local Supabase):**
+
+```bash
+# Install Supabase local development
+npm install supabase --save-dev
+
+# Start Supabase locally (requires Docker)
+supabase start
+
+# This creates local PostgreSQL, Auth, and all other services
+# Uses minimal resources vs full Docker Compose setup
+```
+
+**For Production:**
+
+```bash
+# Supabase handles everything
+# - PostgreSQL (auto-scaling)
+# - Auth (managed)
+# - Storage (managed)
+# - Realtime (managed)
+
+# Frontend deploys to Vercel (with 1 click)
+# Backend API: Supabase provides REST API out-of-box
+# No manually managed servers needed
 ```
 
 ---
 
 ## Section 2: Week 1-2 Foundation
 
-### 2.1 Backend Project Setup
+### 2.1 Backend Project Setup (Supabase + Clerk)
 
-#### 2.1.1 Initialize Node Project
+#### 2.1.1 Initialize Node Project with Modern Stack
 
 ```bash
 cd backend
 npm init -y
-npm install express typescript @types/express @types/node
-npm install -D ts-node nodemon @types/jest jest ts-jest
-npm install dotenv pg @types/pg
-npm install jsonwebtoken bcryptjs axios
-npm install --save-dev typescript ts-node nodemon prettier eslint
+npm install @supabase/supabase-js
+npm install @clerk/backend
+npm install resend
+npm install stripe
+npm install axios
+npm install dotenv
+npm install zod
+
+# Dev dependencies
+npm install -D typescript ts-node nodemon prettier eslint @types/node
+npm install -D @types/express @types/jest jest ts-jest
 ```
 
-#### 2.1.2 TypeScript Configuration
+#### 2.1.2 TypeScript Configuration (remains mostly the same)
 
 ```json
 // backend/tsconfig.json
@@ -1441,11 +453,11 @@ npm install --save-dev typescript ts-node nodemon prettier eslint
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "exclude": ["node_modules", "dist"]
 }
 ```
 
-#### 2.1.3 Environment Configuration
+#### 2.1.3 Environment Configuration (Supabase + Clerk)
 
 ```typescript
 // backend/src/config/env.ts
@@ -1458,80 +470,254 @@ export const config = {
   PORT: parseInt(process.env.PORT || '3000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   
-  // Database
-  DB_HOST: process.env.DB_HOST || 'localhost',
-  DB_PORT: parseInt(process.env.DB_PORT || '5432', 10),
-  DB_USER: process.env.DB_USER || 'circleexchange',
-  DB_PASSWORD: process.env.DB_PASSWORD || '',
-  DB_NAME: process.env.DB_NAME || 'circleexchange_dev',
+  // Supabase
+  SUPABASE_URL: process.env.SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
   
-  // Redis
-  REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
+  // Clerk (replaces JWT)
+  CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY || '',
+  CLERK_API_KEY: process.env.CLERK_API_KEY || '',
   
-  // JWT
-  JWT_SECRET: process.env.JWT_SECRET || 'dev_secret_key',
-  JWT_EXPIRE: process.env.JWT_EXPIRE || '7d',
-  
-  // Email
-  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '',
+  // Resend (replaces SendGrid)
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@circleexchange.com',
   
-  // Storage
-  STORAGE_PROVIDER: process.env.STORAGE_PROVIDER || 'local', // local, s3, azure
-  AWS_REGION: process.env.AWS_REGION || 'us-east-1',
-  AWS_S3_BUCKET: process.env.AWS_S3_BUCKET || '',
-  AZURE_STORAGE_ACCOUNT: process.env.AZURE_STORAGE_ACCOUNT || '',
+  // Stripe
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+  STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY || '',
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
   
-  // App
+  // Upstash Redis (replaces local Redis)
+  UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL || '',
+  UPSTASH_REDIS_TOKEN: process.env.UPSTASH_REDIS_TOKEN || '',
+  
+  // Pinecone (for AI/embeddings)
+  PINECONE_API_KEY: process.env.PINECONE_API_KEY || '',
+  PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME || 'circleexchange',
+  
+  // Sentry
+  SENTRY_DSN: process.env.SENTRY_DSN || '',
+  
+  // PostHog
+  POSTHOG_API_KEY: process.env.POSTHOG_API_KEY || '',
+  
+  // App URLs
   API_URL: process.env.API_URL || 'http://localhost:3000',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001',
 };
-```
 
-#### 2.1.4 Database Configuration
-
-```typescript
-// backend/src/config/database.ts
-import pg from 'pg';
-import { config } from './env';
-
-const pool = new pg.Pool({
-  host: config.DB_HOST,
-  port: config.DB_PORT,
-  user: config.DB_USER,
-  password: config.DB_PASSWORD,
-  database: config.DB_NAME,
-});
-
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-});
-
-export async function query(text: string, params?: any[]) {
-  const start = Date.now();
-  try {
-    const result = await pool.query(text, params);
-    const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: result.rowCount });
-    return result;
-  } catch (error) {
-    console.error('Database error:', error);
-    throw error;
+// Validate required env vars
+const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'CLERK_SECRET_KEY'];
+for (const key of required) {
+  if (!config[key as keyof typeof config]) {
+    console.error(`Missing required environment variable: ${key}`);
   }
 }
-
-export async function getClient() {
-  return pool.connect();
-}
-
-export async function closePool() {
-  await pool.end();
-}
-
-export default pool;
 ```
 
-#### 2.1.5 Express App Setup
+#### 2.1.4 Supabase Client Setup
+
+```typescript
+// backend/src/config/supabase.ts
+import { createClient } from '@supabase/supabase-js';
+import { config } from './env';
+
+// Use service key for backend privileges
+export const supabase = createClient(
+  config.SUPABASE_URL,
+  config.SUPABASE_SERVICE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
+
+// Anon client for RLS (Row Level Security)
+export const supabaseAnon = createClient(
+  config.SUPABASE_URL,
+  config.SUPABASE_ANON_KEY
+);
+
+// Database query helper (TypeScript-safe)
+export async function query<T>(
+  table: string,
+  options: any
+): Promise<T | null> {
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .match(options);
+
+  if (error) throw error;
+  return data as T;
+}
+```
+
+#### 2.1.5 Clerk Authentication Setup
+
+```typescript
+// backend/src/middleware/auth.ts
+import { clerkMiddleware, getAuth } from '@clerk/backend';
+import { Request, Response, NextFunction } from 'express';
+
+// Middleware to attach Clerk user info to request
+export const withAuth = clerkMiddleware();
+
+// Helper to get Clerk user from request
+export function getClerkUser(req: Request) {
+  const { userId } = getAuth(req);
+  if (!userId) throw new Error('Unauthorized');
+  return userId;
+}
+
+// Optional auth: user info available but not required
+export const withOptionalAuth = clerkMiddleware({ 
+  skip: () => true 
+});
+```
+
+#### 2.1.6 Resend Email Service (replaces SendGrid)
+
+```typescript
+// backend/src/services/email.service.ts
+import { Resend } from 'resend';
+import { config } from '../config/env';
+
+const resend = new Resend(config.RESEND_API_KEY);
+
+export async function sendVerificationEmail(
+  to: string,
+  verificationToken: string
+) {
+  const verifyUrl = `${config.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+  
+  await resend.emails.send({
+    from: config.EMAIL_FROM,
+    to,
+    subject: 'Verify your email - CircleExchange',
+    html: `
+      <p>Click the link below to verify your email:</p>
+      <a href="${verifyUrl}">${verifyUrl}</a>
+    `,
+  });
+}
+
+export async function sendPasswordResetEmail(
+  to: string,
+  resetToken: string
+) {
+  const resetUrl = `${config.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  
+  await resend.emails.send({
+    from: config.EMAIL_FROM,
+    to,
+    subject: 'Reset your password - CircleExchange',
+    html: `
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetUrl}">${resetUrl}</a>
+    `,
+  });
+}
+```
+
+#### 2.1.7 Stripe Payment Integration
+
+```typescript
+// backend/src/services/stripe.service.ts
+import Stripe from 'stripe';
+import { config } from '../config/env';
+
+const stripe = new Stripe(config.STRIPE_SECRET_KEY, {
+  apiVersion: '2024-04-10',
+});
+
+export async function createCheckoutSession(
+  userId: string,
+  listingId: string,
+  amount: number
+) {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `CircleExchange Listing #${listingId}`,
+          },
+          unit_amount: Math.round(amount * 100),
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `${config.FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${config.FRONTEND_URL}/checkout/cancel`,
+    metadata: {
+      userId,
+      listingId,
+    },
+  });
+
+  return session;
+}
+
+export async function handleStripeWebhook(
+  event: Stripe.Event
+) {
+  switch (event.type) {
+    case 'checkout.session.completed':
+      // Handle successful payment
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log('Payment succeeded:', session.id);
+      break;
+  }
+}
+```
+
+#### 2.1.8 API Routes with Clerk Auth
+
+```typescript
+// backend/src/app.ts
+import express from 'express';
+import cors from 'cors';
+import { clerkMiddleware } from '@clerk/backend';
+import { config } from './config/env';
+
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: [config.FRONTEND_URL],
+  credentials: true,
+}));
+app.use(express.json());
+app.use(clerkMiddleware()); // Attach Clerk user to request
+
+// Health check
+app.get('/api/v1/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Protected route example
+app.get('/api/v1/me', (req, res) => {
+  const { userId } = req.auth;
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+  
+  res.json({ userId });
+});
+
+// Error handler
+app.use((err: any, req: any, res: any) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: err.message });
+});
+
+export default app;
+```
 
 ```typescript
 // backend/src/app.ts
