@@ -64,6 +64,7 @@ jobs:
         with:
           workload_identity_provider: projects/1035400141363/locations/global/workloadIdentityPools/github-deploy/providers/github-main
           service_account: github-deploy@circle-exchange.iam.gserviceaccount.com
+          create_credentials_file: true
       - name: Deploy Firestore rules and indexes
         run: pnpm exec firebase deploy --project circle-exchange --only firestore:rules,firestore:indexes --non-interactive
       - name: Build and deploy Hosting
