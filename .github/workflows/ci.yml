@@ -1,5 +1,8 @@
-name: Web app checks
-on: [push, pull_request]
+name: Web app checks and deployment
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -23,3 +26,47 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:rules
+
+  deploy:
+    name: Deploy production from main
+    needs: verify
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: circle-exchange-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VITE_USE_FIREBASE_EMULATORS: 'false'
+      VITE_FIREBASE_API_KEY: 'AIzaSyDuGF9LjsFv9q7oKnd2z5GzPPKZuvXF67s'
+      VITE_FIREBASE_AUTH_DOMAIN: circle-exchange.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: circle-exchange
+      VITE_FIREBASE_APP_ID: '1:1035400141363:web:91632dace78734a8102146'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify checked-out commit was the one tested
+        run: node scripts/check-deployment-source.mjs
+      - name: Authenticate with short-lived Google credentials
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/1035400141363/locations/global/workloadIdentityPools/github-deploy/providers/github-main
+          service_account: github-deploy@circle-exchange.iam.gserviceaccount.com
+      - name: Deploy Firestore rules and indexes
+        run: pnpm exec firebase deploy --project circle-exchange --only firestore:rules,firestore:indexes --non-interactive
+      - name: Build and deploy Hosting
+        run: pnpm exec firebase deploy --project circle-exchange --only hosting --non-interactive
+      - name: Verify hosted application
+        run: curl --fail --retry 3 --retry-delay 5 https://circle-exchange.web.app/
