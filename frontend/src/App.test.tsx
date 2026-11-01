@@ -9,6 +9,7 @@ vi.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: mocks.register, signInWithEmailAndPassword: mocks.login,
   sendPasswordResetEmail: mocks.reset, sendEmailVerification: vi.fn(), reload: vi.fn(), signOut: vi.fn(),
 }));
+vi.mock('./services/company', () => ({ ensureCompanyMembership: vi.fn().mockResolvedValue(null), saveWorkDetails: vi.fn() }));
 import App from './App';
 beforeEach(() => { vi.clearAllMocks(); mocks.user = null; mocks.load.mockResolvedValue('Ada'); mocks.save.mockResolvedValue(undefined); });
 it('shows a useful sign-in error and permits retry', async () => {

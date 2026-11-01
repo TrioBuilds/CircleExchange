@@ -15,15 +15,17 @@ Old plans in `documentation/archive/` are historical only.
 - [ ] Configure the owner's Firebase Spark project and deploy after local verification.
 - [ ] Validate real email delivery and hosted account flow against that project.
 
-## Milestone 2 — One verified community
+## Milestone 2 — Automatic company onboarding
 
-- [ ] Define the pilot community and its real-world approval criteria.
-- [ ] Bootstrap the community and first administrator through trusted Console access.
-- [ ] Add join request, approval/rejection and revocation data models.
-- [ ] Test self-approval, role escalation, revoked membership and cross-community isolation.
-- [ ] Build member request and administrator review screens.
+- [x] Map exact verified hp.com and google.com emails to company memberships.
+- [x] Automatically enroll without an administrator approval step.
+- [x] Persist optional self-reported work location and office/branch.
+- [x] Show clear waiting states for personal and unsupported email domains.
+- [x] Enforce domain, UID, immutable role and revoked-status protections in Firestore.
+- [x] Add application and emulator authorization tests.
+- [ ] Merge PR and validate deployed onboarding.
 
-Acceptance: an approved member can enter their community; pending/rejected/revoked users cannot read its protected data.
+Residential communities, membership requests and administrator tooling are deferred. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
 
 ## Milestone 3 — Text marketplace
 
