@@ -63,3 +63,9 @@ Deployment is a separate step: the code can run locally before a cloud project e
 - On quota exhaustion, reduce traffic/usage or wait for reset rather than enabling billing automatically.
 - Use Firebase Console access only for trusted project administrators.
 - Review provider pricing again before enabling any additional product.
+
+## Deployment branch policy
+
+All production deployments must originate from `main`. Open a PR, pass checks and merge it before deploying. Then run `git switch main` and `git pull --ff-only`.
+
+Firebase predeploy hooks reject feature branches, detached HEADs, dirty working trees and a local commit that differs from freshly fetched `origin/main`. Hosting builds again from that verified checkout to avoid uploading stale feature-branch artifacts. The same source check protects Firestore rule/index deployment. These are repository-side safeguards; project administrators can still bypass them outside this repository, so use this documented workflow.
