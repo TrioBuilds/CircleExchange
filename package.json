@@ -1,0 +1,29 @@
+{
+  "name": "circleexchange",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "vite --config frontend/vite.config.ts",
+    "build": "tsc -p frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
+    "type-check": "tsc -p frontend/tsconfig.json",
+    "lint": "eslint frontend/src tests",
+    "test": "vitest run --config frontend/vite.config.ts",
+    "test:rules": "firebase emulators:exec --project demo-circleexchange --only firestore \"vitest run --config vitest.rules.config.ts\"",
+    "emulators": "firebase emulators:start --project demo-circleexchange --only auth,firestore",
+    "preview": "vite preview --config frontend/vite.config.ts",
+    "deploy:build": "node scripts/check-production.mjs && pnpm build"
+  },
+  "dependencies": { "firebase": "13.1.0", "react": "^19.2.0", "react-dom": "^19.2.0" },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1", "@firebase/rules-unit-testing": "6.0.0",
+    "@testing-library/react": "^16.3.0", "@testing-library/jest-dom": "6.9.1", "@testing-library/dom": "^10.4.1",
+    "@testing-library/user-event": "^14.6.1", "@types/node": "^24.10.0",
+    "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "6.1.2", "eslint": "^10.0.0",
+    "firebase-tools": "15.34.2", "globals": "^16.5.0", "jsdom": "^28.1.0",
+    "typescript": "~5.9.3", "typescript-eslint": "^8.48.0", "vite": "8.3.5", "vitest": "^4.0.18"
+  }
+}
