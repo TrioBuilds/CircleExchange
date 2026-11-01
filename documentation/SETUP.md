@@ -69,3 +69,15 @@ Deployment is a separate step: the code can run locally before a cloud project e
 All production deployments must originate from `main`. Open a PR, pass checks and merge it before deploying. Then run `git switch main` and `git pull --ff-only`.
 
 Firebase predeploy hooks reject feature branches, detached HEADs, dirty working trees and a local commit that differs from freshly fetched `origin/main`. Hosting builds again from that verified checkout to avoid uploading stale feature-branch artifacts. The same source check protects Firestore rule/index deployment. These are repository-side safeguards; project administrators can still bypass them outside this repository, so use this documented workflow.
+
+## Automatic deployment
+
+GitHub Actions runs checks for pushes and PRs. Only pushes to `main` (or a manual workflow run on `main`) deploy to production, after every verification step succeeds. Feature branches and PRs cannot deploy.
+
+The deployment job checks out `main`, verifies the tested commit still matches the checkout and remote main, then deploys Firestore rules/indexes before rebuilding and deploying Hosting. Production jobs are serialized without interrupting an in-progress release. If main advances before a queued job starts, the stale job refuses deployment and the newer run handles it. GitHub concurrency may replace older pending runs with the newest one during rapid pushes; the latest validated main is the deployment target.
+
+Authentication uses GitHub OIDC and Google Workload Identity Federation, not a stored service-account key. The provider is restricted to repository ID `1162750031`, owner ID `262616082`, `refs/heads/main`, and `.github/workflows/ci.yml` on main. The deployment identity has only Hosting, Firebase Rules, Firestore index administration, Firebase read access and service usage permissions within `circle-exchange`.
+
+Firebase browser configuration in the workflow is public application configuration. Generated short-lived credential files are ignored by Git and removed by the authentication action. Firebase billing remains disabled. Because this repository is private, monitor GitHub Actions included minutes; do not enable paid overages automatically.
+
+To retry a failed deployment, open Actions → Web app checks and deployment → Run workflow → select main. Diagnose failures before retrying. Do not bypass failed tests or deploy a feature branch. Review changes to this workflow and the deployment scripts with particular care.
