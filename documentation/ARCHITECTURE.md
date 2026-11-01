@@ -1,6 +1,6 @@
 # CircleExchange web application architecture
 
-Status: accepted for the initial pilot. Updated: 2026-11-01.
+Status: accepted for the initial pilot. Updated: 2026-11-02.
 This document supersedes the previous React Native/Express/Clerk/Supabase plans.
 
 ## 1. Product and scope
@@ -8,7 +8,7 @@ This document supersedes the previous React Native/Express/Clerk/Supabase plans.
 CircleExchange is a responsive browser application for exchanging goods and services within approved communities. The primary interface is an authenticated workspace. The initial pilot serves one small community before supporting many communities.
 
 First deliverable: accounts, verified email ownership, and private profiles.
-Next deliverable: administrator-approved community membership.
+Current milestone: automatic membership using verified, mapped company email domains. Residential communities and administrator approval are deferred.
 Then: text listings, private messaging, completion tracking, and basic moderation.
 Native mobile apps, social feeds, payments, subscription transfers, AI, uploads, and recommendation engines are deferred.
 
@@ -50,20 +50,20 @@ Operational rules:
 
 Authentication UID is the stable user identifier. Firebase manages passwords, email verification and session tokens. Do not store passwords, tokens or email copies in public profile documents.
 
-Email verification proves ownership of an address only. Community membership requires a separate approval process. Domain matching alone must never imply membership.
+Email verification proves mailbox ownership. For explicitly mapped company domains, verified ownership grants ordinary membership automatically. Initial mappings: hp.com → HP and google.com → Google. This is not a claim of employment verification or employer endorsement.
 
-For the first community, the project owner creates the community and its first administrator through Firebase Console after checking the person. Future membership requests start pending; administrators approve them based on real community evidence. A user cannot approve themselves, edit roles, change their community ID, or restore a revoked membership. Administrator rules must be scoped to the same community. Bootstrap administration never happens from an ordinary browser account.
+Company onboarding has no manual approval step. Firestore rules derive company eligibility from signed, verified email claims. Work location and branch are optional self-reported details. Personal-email and residential approval workflows are deferred. See [COMPANY_ONBOARDING.md](COMPANY_ONBOARDING.md) for the authoritative membership contract, revocation behavior and verification limits.
 
 ## 5. Data model
 
-Only `/users/{uid}` is implemented in milestone 1. All other paths are currently denied by rules.
+Implemented: private profiles and own company membership records. The HP/Google directory is static; no parent community documents or seed operation are required. Other paths remain denied.
 
 | Path | Fields and purpose | Access policy when implemented |
 | --- | --- | --- |
 | `users/{uid}` | `displayName`, `createdAt`, `updatedAt` | Owner reads; verified owner creates/edits; exact field allowlist |
 | `communities/{communityId}` | Name, description, active status | Approved directory metadata only; administrator changes |
 | `communities/{id}/joinRequests/{uid}` | Applicant, pending/approved/rejected, timestamps | Applicant creates pending request; same-community admin reviews |
-| `communities/{id}/members/{uid}` | Role, active/revoked status, approval metadata | Admin-controlled; active-member checks for protected access |
+| `communities/{id}/members/{uid}` | Verified domain, member role, active/revoked status, optional work location/branch, timestamps | Exact verified domain auto-enrollment; own reads and work-detail updates; no client role changes or deletion |
 | `communities/{id}/listings/{listingId}` | Seller UID, title, description, category, amountMinor, currency, active/reserved/sold status, timestamps | Active members read; verified active seller creates; owner edits |
 | `communities/{id}/conversations/{conversationId}` | Listing ID, buyer UID, seller UID, timestamps | Exactly the participants, with active membership |
 | `.../conversations/{id}/messages/{messageId}` | Sender UID, plain text, createdAt | Participants only; sender must match auth UID; immutable messages initially |
@@ -79,7 +79,7 @@ Use integer minor currency units, never floating-point accounting. Choose the pi
 2. A verification screen explicitly offers to send/resend the email; delivery failure never appears as failed account creation.
 3. User opens the verification link, returns and refreshes verification. The app refreshes the ID token before writing verified-only data.
 4. User loads and saves their display name in a private profile.
-5. The app clearly states that community approval and trading are not yet available.
+5. Supported company users are enrolled automatically and may save work location/branch. Other users see a waiting state. Trading is not yet available.
 
 Profile saves use a transaction to preserve `createdAt` during retries or concurrent first saves. Server timestamps prevent forged dates. Failed reads have a retry state rather than inviting overwriting an unseen profile. Sign-out clears the rendered account view; no persistent Firestore browser cache is enabled.
 
@@ -100,7 +100,7 @@ One root package and committed pnpm lockfile. Frontend lives in `frontend/`. Fir
 
 Local emulators use only `demo-circleexchange`. The client rejects accidental live-project configuration in emulator mode. Test project data is disposable and does not access production. CI runs lint, component/config tests, a production build and real Firestore emulator rule tests without cloud credentials.
 
-Production uses explicit Firebase project selection. Build and deploy rules before publishing Hosting. The deployment procedure must reject emulator mode and missing configuration. No automatic deployment or billing change is performed by CI.
+Production uses explicit Firebase project selection. Build and deploy rules before publishing Hosting. The deployment procedure must reject emulator mode and missing configuration. CI deploys successfully validated main commits automatically. Feature branches cannot deploy; billing changes are not automated.
 
 ## 9. Growth after funding
 

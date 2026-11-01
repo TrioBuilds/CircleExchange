@@ -4,6 +4,23 @@ service cloud.firestore {
     function owner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    function verifiedCompany(companyId) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && ((companyId == 'hp' && request.auth.token.email.lower().matches('[^@ ]+@hp[.]com'))
+          || (companyId == 'google' && request.auth.token.email.lower().matches('[^@ ]+@google[.]com')));
+    }
+    function validMembership(companyId) {
+      let data = request.resource.data;
+      return data.keys().hasAll(['emailDomain', 'role', 'status', 'workLocation', 'branch', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['emailDomain', 'role', 'status', 'workLocation', 'branch', 'createdAt', 'updatedAt'])
+        && data.emailDomain == (companyId == 'hp' ? 'hp.com' : 'google.com')
+        && data.role == 'member' && data.status == 'active'
+        && data.workLocation is string && data.workLocation.size() <= 80
+        && data.branch is string && data.branch.size() <= 80
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
     function validProfile() {
       let data = request.resource.data;
       return data.keys().hasAll(['displayName', 'createdAt', 'updatedAt'])
@@ -19,10 +36,21 @@ service cloud.firestore {
         && validProfile() && request.resource.data.createdAt == request.time;
       allow update: if owner(uid) && request.auth.token.email_verified == true
         && validProfile() && request.resource.data.createdAt == resource.data.createdAt;
-      // No enumeration or client-side deletion; account deletion needs a coordinated data workflow.
       allow list, delete: if false;
     }
-    // Future communities, membership, listings and messages stay closed until their rules are tested.
+    match /communities/{companyId}/members/{uid} {
+      // Only the owner sees their record; no member directory or client-created company metadata.
+      // Re-check current signed identity on every request, not just when the record is created.
+      allow get: if owner(uid) && verifiedCompany(companyId);
+      allow create: if owner(uid) && verifiedCompany(companyId) && validMembership(companyId)
+        && request.resource.data.createdAt == request.time;
+      allow update: if owner(uid) && verifiedCompany(companyId) && validMembership(companyId)
+        && resource.data.status == 'active'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['workLocation', 'branch', 'updatedAt']);
+      // Prevent deletion/recreation from bypassing revocation. Revocation is a trusted Console operation for now.
+      allow list, delete: if false;
+    }
+    // Listings, messages, residential requests and all other paths remain closed.
     match /{document=**} { allow read, write: if false; }
   }
 }

@@ -6,6 +6,7 @@ import {
 import { configuration, firebase } from './services/firebase';
 import { loadProfile, saveProfile } from './services/profile';
 import { friendlyError } from './errors';
+import CompanyPanel from './CompanyPanel';
 
 function Notice({ error, message }: { error: string; message: string }) {
   return <>{error && <p className="notice error" role="alert">{error}</p>}{message && <p className="notice" role="status">{message}</p>}</>;
@@ -19,7 +20,7 @@ function Shell({ children, user }: { children: ReactNode; user?: User | null }) 
       <div className="workspace-label">YOUR WORKSPACE</div>
       <div className="nav-active"><span>◉</span> My account</div>
       <p className="sidebar-caption">A little closer.<br />A lot more useful.</p>
-      <div className="sidebar-note"><span className="dot" /> First steps<br /><small>Build your profile. Your community comes next.</small></div>
+      <div className="sidebar-note"><span className="dot" /> First steps<br /><small>Verify your company email. Find your circle.</small></div>
     </aside>
     <main>
       <header><span>Workspace <span className="separator">/</span> My account</span><span className="phase">EARLY ACCESS</span></header>
@@ -61,7 +62,7 @@ function AuthForm() {
     <div className="account-grid">
       <section className="card">
         <div className="card-heading"><span className="step">01</span><h2>{mode === 'register' ? 'Create your account' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h2></div>
-        <p className="muted">{mode === 'register' ? 'Start with an email address you can verify.' : mode === 'reset' ? 'We’ll send you a link to choose a new password.' : 'Sign in to continue to your workspace.'}</p>
+        <p className="muted">{mode === 'register' ? 'Use your company email to join a supported workplace community.' : mode === 'reset' ? 'We’ll send you a link to choose a new password.' : 'Sign in to continue to your workspace.'}</p>
         <form onSubmit={(event) => void submit(event)}>
           <label htmlFor="email">Email address</label>
           <input id="email" type="email" autoComplete="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -74,7 +75,7 @@ function AuthForm() {
           {mode === 'login' && <button className="text-button" disabled={busy} onClick={() => changeMode('reset')}>Forgot password?</button>}
         </div>
       </section>
-      <section className="journey"><p className="eyebrow">ONE STEP AT A TIME</p><h2>Start with a name.<br />Grow into a circle.</h2><ol><li><strong>Create your account</strong><span>A private space that belongs to you.</span></li><li><strong>Verify your email</strong><span>Confirm that you own your email address.</span></li><li><strong>Save your profile</strong><span>Choose how you’d like to be known.</span></li></ol><p className="fine-print">Community membership is a separate approval step. Trading opens when community features are ready.</p></section>
+      <section className="journey"><p className="eyebrow">ONE STEP AT A TIME</p><h2>Start with a name.<br />Grow into a circle.</h2><ol><li><strong>Create your account</strong><span>A private space that belongs to you.</span></li><li><strong>Verify your email</strong><span>Confirm ownership of your company email.</span></li><li><strong>Save your profile</strong><span>Join your company and add optional work details.</span></li></ol><p className="fine-print">Verified @hp.com and @google.com addresses join their company communities automatically. Personal-email communities come later.</p></section>
     </div>
   </>;
 }
@@ -95,7 +96,7 @@ function Verification({ user, onVerified }: { user: User; onVerified: () => void
       }
     } catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
-  return <><p className="eyebrow">STEP 02 / EMAIL VERIFICATION</p><h1>Let’s make it yours.</h1><section className="card narrow"><h2>Verify your email address</h2><p>Send a verification link to <strong>{user.email}</strong>. After opening it, return here to continue.</p><Notice error={error} message={message} /><div className="button-row"><button className="primary" disabled={busy} onClick={() => void act('send')}>Send verification email</button><button className="secondary" disabled={busy} onClick={() => void act('check')}>I’ve verified my email</button></div><p className="fine-print">Email verification confirms email ownership. It does not grant access to a community.</p></section></>;
+  return <><p className="eyebrow">STEP 02 / EMAIL VERIFICATION</p><h1>Let’s make it yours.</h1><section className="card narrow"><h2>Verify your email address</h2><p>Send a verification link to <strong>{user.email}</strong>. After opening it, return here to continue.</p><Notice error={error} message={message} /><div className="button-row"><button className="primary" disabled={busy} onClick={() => void act('send')}>Send verification email</button><button className="secondary" disabled={busy} onClick={() => void act('check')}>I’ve verified my email</button></div><p className="fine-print">After verification, supported company email addresses join their company community automatically.</p></section></>;
 }
 
 function Profile({ user }: { user: User }) {
@@ -123,7 +124,7 @@ function Profile({ user }: { user: User }) {
     <section className="card"><div className="card-heading"><span className="step">03</span><h2>Your profile</h2></div><span className="verified">✓ Email verified</span>
       <form onSubmit={(event) => void submit(event)}><label htmlFor="name">Display name</label><input id="name" autoComplete="nickname" required minLength={2} maxLength={60} value={name} disabled={loading || loadFailed} onChange={(e) => setName(e.target.value)} /><small>Between 2 and 60 characters. Your profile is currently private.</small><Notice error={error} message={message} />{loadFailed ? <button type="button" className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry loading profile</button> : <button className="primary" disabled={busy || loading || name.trim().length < 2}>{loading ? 'Loading profile…' : busy ? 'Saving…' : 'Save profile'}</button>}</form>
     </section>
-    <section className="journey"><p className="eyebrow">COMING NEXT</p><h2>Find your circle.</h2><p>Community joining and membership approval are the next milestone.</p><div className="empty-icon">◎</div><p className="fine-print">No community access has been granted. Listings and messaging will follow verified membership.</p></section>
+    <CompanyPanel key={user.uid + user.email} uid={user.uid} />
   </div></>;
 }
 
