@@ -4,18 +4,23 @@ service cloud.firestore {
     function owner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    function emailDomain() {
+      return request.auth.token.email.lower().split('@')[1];
+    }
     function verifiedCompany(companyId) {
-      return request.auth != null
-        && request.auth.token.email_verified == true
+      return request.auth != null && request.auth.token.email_verified == true
         && request.auth.token.email is string
-        && ((companyId == 'hp' && request.auth.token.email.lower().matches('[^@ ]+@hp[.]com'))
-          || (companyId == 'google' && request.auth.token.email.lower().matches('[^@ ]+@google[.]com')));
+        && request.auth.token.email.matches('[^@\\s]+@[^@\\s]+')
+        && emailDomain().size() <= 253
+        && emailDomain().matches('([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?[.])+[a-z]{2,63}')
+        && !emailDomain().matches('(.+[.])?((gmail|googlemail|yahoo|ymail|rocketmail|hotmail|outlook|live|msn|icloud|me|mac|aol|protonmail|proton|fastmail|gmx|mail|zoho|yandex|rediffmail|hey|tuta|tutanota)[.](com|net|org|de|in|fr|ru|it|co[.]uk|co[.]in|co[.]jp|com[.]au)|pm[.]me)')
+        && companyId == (emailDomain() == 'hp.com' ? 'hp' : emailDomain() == 'google.com' ? 'google' : emailDomain());
     }
     function validMembership(companyId) {
       let data = request.resource.data;
       return data.keys().hasAll(['emailDomain', 'role', 'status', 'workLocation', 'branch', 'createdAt', 'updatedAt'])
         && data.keys().hasOnly(['emailDomain', 'role', 'status', 'workLocation', 'branch', 'createdAt', 'updatedAt'])
-        && data.emailDomain == (companyId == 'hp' ? 'hp.com' : 'google.com')
+        && data.emailDomain == emailDomain()
         && data.role == 'member' && data.status == 'active'
         && data.workLocation is string && data.workLocation.size() <= 80
         && data.branch is string && data.branch.size() <= 80

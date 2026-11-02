@@ -42,11 +42,19 @@ describe('private profiles', () => {
 describe('automatic company membership', () => {
   const member = (domain = 'hp.com') => ({ emailDomain: domain, role: 'member', status: 'active', workLocation: '', branch: '', createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   const employee = (email: string, uid = 'ada', verified = true) => env.authenticatedContext(uid, { email, email_verified: verified }).firestore();
-  it.each(COMPANIES)('creates a member of $id from a verified exact domain', async ({id,domain}) => {
+  it.each([...COMPANIES, {id:'linkedin.com', domain:'linkedin.com'}, {id:'new.co.uk', domain:'new.co.uk'}])('creates a member of $id from a verified exact domain', async ({id,domain}) => {
     const ref = doc(employee(`ada@${domain}`), `communities/${id}/members/ada`);
     await assertSucceeds(setDoc(ref, member(domain)));
     await assertSucceeds(getDoc(ref));
     await assertSucceeds(updateDoc(ref, { workLocation:'Bengaluru', branch:'Campus A', updatedAt:serverTimestamp() }));
+  });
+  it('keeps personal domains out and lookalike domains isolated', async () => {
+    for (const domain of ['gmail.com','yahoo.co.in','outlook.com','pm.me']) {
+      await assertFails(setDoc(doc(employee('ada@' + domain), 'communities/' + domain + '/members/ada'), member(domain)));
+    }
+    const db = employee('ada@linkedin.com.evil.org');
+    await assertFails(setDoc(doc(db,'communities/linkedin.com/members/ada'),member('linkedin.com')));
+    await assertSucceeds(setDoc(doc(db,'communities/linkedin.com.evil.org/members/ada'),member('linkedin.com.evil.org')));
   });
   it('accepts case-insensitive company domains', async () => {
     await assertSucceeds(setDoc(doc(employee('Ada@HP.COM'), 'communities/hp/members/ada'), member()));
