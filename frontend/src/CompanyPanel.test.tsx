@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 const mocks=vi.hoisted(() => ({ ensure: vi.fn(), save: vi.fn() }));
 vi.mock('./services/company', () => ({ ensureCompanyMembership: mocks.ensure, saveWorkDetails: mocks.save }));
+vi.mock('./Listings', () => ({ default: () => null }));
 import CompanyPanel from './CompanyPanel';
 const membership = { company: {id:'hp',name:'HP',domain:'hp.com'}, status:'active',workLocation:'',branch:'' };
 beforeEach(() => { vi.clearAllMocks(); mocks.ensure.mockResolvedValue(membership); mocks.save.mockResolvedValue(undefined); });

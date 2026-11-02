@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ensureCompanyMembership, saveWorkDetails, type CompanyMembership } from './services/company';
+import Listings from './Listings';
 import { friendlyError } from './errors';
 
 export default function CompanyPanel({ uid }: { uid: string }) {
@@ -57,7 +58,8 @@ export default function CompanyPanel({ uid }: { uid: string }) {
         {message && <p className="notice" role="status">{message}</p>}
         <button className="primary" disabled={busy}>{busy ? 'Saving work details…' : 'Save work details'}</button>
       </form>
-      <p className="fine-print">Company email verified means mailbox ownership, not an employer endorsement. Listings and messaging are coming next.</p>
+      <p className="fine-print">Company email verified means mailbox ownership, not an employer endorsement.</p>
+      <Listings company={membership.company} uid={uid} />
     </>}
   </section>;
 }
