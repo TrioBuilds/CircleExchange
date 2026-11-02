@@ -50,7 +50,32 @@ service cloud.firestore {
       // Prevent deletion/recreation from bypassing revocation. Revocation is a trusted Console operation for now.
       allow list, delete: if false;
     }
-    // Listings, messages, residential requests and all other paths remain closed.
+    function activeMember(companyId) {
+      return verifiedCompany(companyId)
+        && get(/databases/$(database)/documents/communities/$(companyId)/members/$(request.auth.uid)).data.status == 'active';
+    }
+    function listingText(value, maximum) {
+      return value is string && value.size() <= maximum && value.trim().size() > 0;
+    }
+    match /communities/{companyId}/listings/{listingId} {
+      allow get: if activeMember(companyId);
+      allow list: if activeMember(companyId) && request.query.limit <= 21;
+      allow create: if activeMember(companyId)
+        && request.resource.data.keys().hasOnly(['ownerId', 'title', 'description', 'category', 'pickup', 'pricePaise', 'status', 'createdAt'])
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.status == 'available'
+        && request.resource.data.createdAt == request.time
+        && listingText(request.resource.data.title, 100)
+        && listingText(request.resource.data.description, 1500)
+        && listingText(request.resource.data.pickup, 120)
+        && request.resource.data.category in ['goods', 'services']
+        && request.resource.data.pricePaise is int
+        && request.resource.data.pricePaise >= 0 && request.resource.data.pricePaise <= 100000000;
+      allow update: if activeMember(companyId) && resource.data.ownerId == request.auth.uid
+        && resource.data.status == 'available' && request.resource.data.status == 'exchanged'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+    }
+    // Other paths remain closed.
     match /{document=**} { allow read, write: if false; }
   }
 }

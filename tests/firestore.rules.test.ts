@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { COMPANIES } from '../frontend/src/companies';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { query, orderBy, limit, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 let env: RulesTestEnvironment;
 beforeAll(async () => { env = await initializeTestEnvironment({ projectId: 'demo-circleexchange', firestore: { host: '127.0.0.1', port: 8080, rules: readFileSync('firestore.rules', 'utf8') } }); });
 beforeEach(async () => { await env.clearFirestore(); });
@@ -103,5 +103,53 @@ describe('automatic company membership', () => {
     await assertFails(setDoc(doc(db,'communities/hp'),{name:'HP'}));
     await assertFails(getDoc(doc(db,'communities/hp/listings/test')));
     await assertFails(setDoc(doc(db,'communities/hp/conversations/test'),{buyerId:'ada'}));
+  });
+});
+
+describe('company listings', () => {
+  const path = 'communities/hp/listings';
+  const employee = (uid: string, email = uid + '@hp.com', verified = true) =>
+    env.authenticatedContext(uid, { email, email_verified: verified }).firestore();
+  const listing = () => ({ ownerId: 'ada', title: 'Desk', description: 'Oak desk', pickup: 'Lobby',
+    category: 'goods', pricePaise: 0, status: 'available', createdAt: serverTimestamp() });
+  async function enroll(uid: string, status = 'active') {
+    await env.withSecurityRulesDisabled(async context => {
+      await setDoc(doc(context.firestore(), 'communities/hp/members/' + uid), { status });
+    });
+  }
+  it('lets colleagues browse and only the owner mark an item exchanged', async () => {
+    await enroll('ada'); await enroll('bob');
+    const owner = doc(employee('ada'), path, 'one');
+    const colleague = employee('bob');
+    await assertSucceeds(setDoc(owner, listing()));
+    await assertSucceeds(getDocs(query(collection(colleague, path), orderBy('createdAt', 'desc'), limit(21))));
+    await assertSucceeds(getDoc(doc(colleague, path, 'one')));
+    await assertFails(updateDoc(doc(colleague, path, 'one'), { status: 'exchanged' }));
+    await assertSucceeds(updateDoc(owner, { status: 'exchanged' }));
+    await assertFails(updateDoc(owner, { status: 'available' }));
+    await assertFails(deleteDoc(owner));
+  });
+  it('denies direct reads, feed queries and writes outside active verified membership', async () => {
+    await enroll('ada');
+    await setDoc(doc(employee('ada'), path, 'one'), listing());
+    await enroll('revoked', 'revoked');
+    for (const db of [employee('ada', 'ada@google.com'), employee('ada', 'ada@hp.com', false),
+      employee('revoked'), employee('missing'), env.unauthenticatedContext().firestore()]) {
+      await assertFails(getDoc(doc(db, path, 'one')));
+      await assertFails(getDocs(query(collection(db, path), limit(21))));
+    }
+    await enroll('ada', 'revoked');
+    await assertFails(setDoc(doc(employee('ada'), path, 'new'), listing()));
+    await assertFails(updateDoc(doc(employee('ada'), path, 'one'), { status: 'exchanged' }));
+  });
+  it('rejects forged or malformed offers and unbounded feed reads', async () => {
+    await enroll('ada');
+    const db = employee('ada');
+    for (const invalid of [{ ownerId: 'bob' }, { pricePaise: -1 }, { pricePaise: 1.5 }, { title: '  ' },
+      { pickup: '' }, { category: 'Unknown' }, { status: 'exchanged' }, { secret: true }, { createdAt: new Date(0) }]) {
+      await assertFails(setDoc(doc(db, path, 'one'), { ...listing(), ...invalid }));
+    }
+    await assertSucceeds(setDoc(doc(db, path, 'one'), { ...listing(), pricePaise: 5999 }));
+    await assertFails(getDocs(collection(db, path)));
   });
 });
