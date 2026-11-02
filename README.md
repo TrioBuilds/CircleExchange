@@ -4,7 +4,7 @@ A browser-based community marketplace, built in small, testable milestones.
 
 ## Current status
 
-Milestone 1 implements email/password registration, sign-in, password reset, explicit email verification, and a private Firestore profile. Verified `@hp.com` and `@google.com` accounts now join their company community automatically and can save optional work location/branch. Other domains keep their profiles and wait for supported communities. Active members can publish free or INR-priced listings, browse their company feed and mark their own items exchanged. Residential approval and messaging remain planned. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
+Milestone 1 implements email/password registration, sign-in, password reset, explicit email verification, and a private Firestore profile. Verified work addresses automatically join the community for their exact domain and can save optional work details. Known personal email providers stay outside workplace communities. Active members can publish free or INR-priced listings, browse their company feed and mark their own items exchanged. Residential approval and messaging remain planned. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
 
 ## Stack
 

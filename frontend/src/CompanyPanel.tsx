@@ -37,8 +37,8 @@ export default function CompanyPanel({ uid }: { uid: string }) {
     {loading ? <p role="status">Connecting your company community…</p> : !membership ? <>
       <h2>{error ? 'Connection interrupted' : 'Your circle is coming.'}</h2>
       {error ? <><p className="notice error" role="alert">{error}</p><button className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry community connection</button></> : <>
-        <p>Your verified email is not mapped to a company community yet.</p>
-        <p>We currently support <strong>@hp.com</strong> and <strong>@google.com</strong>. Personal-email and residential communities will come later.</p>
+        <p>This email address is not eligible for a workplace community.</p>
+        <p>Verify a work email to join its domain’s community automatically. Personal-email and residential communities will come later.</p>
         <p className="fine-print">Your account and private profile are ready. No community membership has been assigned.</p>
       </>}
     </> : membership.status === 'revoked' ? <>

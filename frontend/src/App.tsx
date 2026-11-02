@@ -75,7 +75,7 @@ function AuthForm() {
           {mode === 'login' && <button className="text-button" disabled={busy} onClick={() => changeMode('reset')}>Forgot password?</button>}
         </div>
       </section>
-      <section className="journey"><p className="eyebrow">ONE STEP AT A TIME</p><h2>Start with a name.<br />Grow into a circle.</h2><ol><li><strong>Create your account</strong><span>A private space that belongs to you.</span></li><li><strong>Verify your email</strong><span>Confirm ownership of your company email.</span></li><li><strong>Save your profile</strong><span>Join your company and add optional work details.</span></li></ol><p className="fine-print">Verified @hp.com and @google.com addresses join their company communities automatically. Personal-email communities come later.</p></section>
+      <section className="journey"><p className="eyebrow">ONE STEP AT A TIME</p><h2>Start with a name.<br />Grow into a circle.</h2><ol><li><strong>Create your account</strong><span>A private space that belongs to you.</span></li><li><strong>Verify your email</strong><span>Confirm ownership of your company email.</span></li><li><strong>Save your profile</strong><span>Join your company and add optional work details.</span></li></ol><p className="fine-print">Verify your work email to join the community for its exact domain. Personal-email communities come later.</p></section>
     </div>
   </>;
 }

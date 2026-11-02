@@ -5,24 +5,24 @@ Decision accepted 2026-11-02. This replaces manual approval for the supported co
 ## User experience
 
 1. Register with a company email and complete Firebase email verification.
-2. The app refreshes the signed ID token and checks the approved exact-domain mapping.
-3. `hp.com` joins the HP community; `google.com` joins the Google community automatically. No request or administrator approval is needed.
+2. The app refreshes the signed ID token and checks the exact verified domain and the exclusions for known personal email providers.
+3. `hp.com` joins the HP community; `google.com` joins the Google community automatically. Other eligible domains join their own communities automatically, including linkedin.com. No request or administrator approval is needed.
 4. The user may optionally save work location and office/branch. These are self-reported labels, not verified attributes or authorization boundaries.
-5. Gmail, Yahoo and all other unmapped addresses retain a usable private profile and see a clear waiting state. They are not assigned to a company, and they do not create a residential community automatically.
+5. Gmail, Yahoo and other recognized personal providers retain a usable private profile and see a clear waiting state. They are not assigned to a company, and they do not create a residential community automatically.
 
-The directory lives in `frontend/src/companies.ts`; Firestore rules independently enforce the same mapping. Adding another company requires a reviewed mapping, matching rules and emulator tests in one PR. Do not infer employer names from arbitrary domains, accept suffix lookalikes, or treat every non-Gmail domain as a company. No cloud seed data, paid services or Functions are required.
+New communities use the full lowercase email domain as their ID. Existing HP and Google paths retain their original IDs. Subdomains and lookalikes get separate communities. The personal-provider exclusions are maintained in the client and Firestore rules and are not an exhaustive classification of email providers. A custom domain can represent a company, a family or another group.
 
 ## Stored membership
 
 `communities/{companyId}/members/{uid}` stores only:
 
-- `emailDomain`: exact approved domain, immutable.
+- `emailDomain`: exact verified domain, immutable.
 - `role`: `member`, immutable from the browser.
 - `status`: `active`; trusted Console operators may set `revoked`.
 - `workLocation`, `branch`: optional strings represented by empty strings when omitted, each at most 80 characters.
 - `createdAt`, `updatedAt`: server timestamps; creation time is immutable.
 
-The directory is static, so there is no required parent `communities/{id}` document. The member subcollection exists independently. Member creation is a transaction: repeat visits and concurrent enrollment do not overwrite previously saved work details or a revoked status. Users can only read their own membership; no member directory or email list is exposed.
+There is no required parent `communities/{id}` document. The member subcollection exists independently. Member creation is a transaction: repeat visits and concurrent enrollment do not overwrite previously saved work details or a revoked status. Users can only read their own membership; no member directory or email list is exposed.
 
 ## Authorization
 

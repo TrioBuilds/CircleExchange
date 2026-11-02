@@ -50,7 +50,7 @@ Operational rules:
 
 Authentication UID is the stable user identifier. Firebase manages passwords, email verification and session tokens. Do not store passwords, tokens or email copies in public profile documents.
 
-Email verification proves mailbox ownership. For explicitly mapped company domains, verified ownership grants ordinary membership automatically. Initial mappings: hp.com → HP and google.com → Google. This is not a claim of employment verification or employer endorsement.
+Email verification proves mailbox ownership. Verified addresses on eligible domains automatically join the community for their exact domain. Known personal providers are excluded. Existing HP and Google IDs remain compatible. Membership verifies mailbox ownership.
 
 Company onboarding has no manual approval step. Firestore rules derive company eligibility from signed, verified email claims. Work location and branch are optional self-reported details. Personal-email and residential approval workflows are deferred. See [COMPANY_ONBOARDING.md](COMPANY_ONBOARDING.md) for the authoritative membership contract, revocation behavior and verification limits.
 
