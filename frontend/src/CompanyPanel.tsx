@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ensureCompanyMembership, saveWorkDetails, type CompanyMembership } from './services/company';
+import LocalityPanel from './LocalityPanel';
+import { isPersonalEmail } from './companies';
 import Listings from './Listings';
 import { friendlyError } from './errors';
 
-export default function CompanyPanel({ uid }: { uid: string }) {
+export default function CompanyPanel({ uid, email }: { uid: string; email?: string | null }) {
   const [membership, setMembership] = useState<CompanyMembership | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -34,11 +36,11 @@ export default function CompanyPanel({ uid }: { uid: string }) {
 
   return <section className="journey" aria-label="Your community">
     <p className="eyebrow">YOUR COMMUNITY</p>
-    {loading ? <p role="status">Connecting your company community…</p> : !membership ? <>
+    {loading ? <p role="status">Connecting your company community…</p> : !membership && !error && isPersonalEmail(email) ? <LocalityPanel uid={uid} /> : !membership ? <>
       <h2>{error ? 'Connection interrupted' : 'Your circle is coming.'}</h2>
       {error ? <><p className="notice error" role="alert">{error}</p><button className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry community connection</button></> : <>
         <p>This email address is not eligible for a workplace community.</p>
-        <p>Verify a work email to join its domain’s community automatically. Personal-email and residential communities will come later.</p>
+        <p>Verify a work email to join its domain’s community automatically. Personal email users can join our Pune locality pilot.</p>
         <p className="fine-print">Your account and private profile are ready. No community membership has been assigned.</p>
       </>}
     </> : membership.status === 'revoked' ? <>
