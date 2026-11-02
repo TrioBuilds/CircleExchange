@@ -4,7 +4,7 @@ import { categories, loadListings, markExchanged, postListing, type Page } from 
 
 const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
-export default function Listings({ company, uid }: { company: Company; uid: string }) {
+export default function Listings({ company, uid }: { company: Pick<Company, 'id' | 'name'>; uid: string }) {
   const [page, setPage] = useState<Page | null>(null);
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -79,7 +79,7 @@ export default function Listings({ company, uid }: { company: Company; uid: stri
 
   return <section aria-label="Community listings">
     <h2>{company.name} listings</h2>
-    <p>Offer an item to members of your company. Include a shared pickup point.</p>
+    <p>Offer an item to members of this community. Include a shared pickup point.</p>
     <form onSubmit={submit}>
       <label>Title<input name="title" maxLength={100} required /></label>
       <label>Description<textarea name="description" maxLength={1500} required /></label>
@@ -93,7 +93,7 @@ export default function Listings({ company, uid }: { company: Company; uid: stri
     </form>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
-    <h3>Company feed</h3>
+    <h3>Community feed</h3>
     <button disabled={busy || loading} onClick={refresh}>Refresh feed</button>
     {loading && <p role="status">Loading listings…</p>}
     {page?.items.length === 0 && <p>No listings yet. Be the first to offer an item.</p>}

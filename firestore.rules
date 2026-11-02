@@ -7,13 +7,14 @@ service cloud.firestore {
     function emailDomain() {
       return request.auth.token.email.lower().split('@')[1];
     }
+    function personalDomain() { return emailDomain().matches('(.+[.])?((gmail|googlemail|yahoo|ymail|rocketmail|hotmail|outlook|live|msn|icloud|me|mac|aol|protonmail|proton|fastmail|gmx|mail|zoho|yandex|rediffmail|hey|tuta|tutanota)[.](com|net|org|de|in|fr|ru|it|co[.]uk|co[.]in|co[.]jp|com[.]au)|pm[.]me)'); }
     function verifiedCompany(companyId) {
       return request.auth != null && request.auth.token.email_verified == true
         && request.auth.token.email is string
         && request.auth.token.email.matches('[^@\\s]+@[^@\\s]+')
         && emailDomain().size() <= 253
         && emailDomain().matches('([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?[.])+[a-z]{2,63}')
-        && !emailDomain().matches('(.+[.])?((gmail|googlemail|yahoo|ymail|rocketmail|hotmail|outlook|live|msn|icloud|me|mac|aol|protonmail|proton|fastmail|gmx|mail|zoho|yandex|rediffmail|hey|tuta|tutanota)[.](com|net|org|de|in|fr|ru|it|co[.]uk|co[.]in|co[.]jp|com[.]au)|pm[.]me)')
+        && !personalDomain()
         && companyId == (emailDomain() == 'hp.com' ? 'hp' : emailDomain() == 'google.com' ? 'google' : emailDomain());
     }
     function validMembership(companyId) {
@@ -55,7 +56,28 @@ service cloud.firestore {
       // Prevent deletion/recreation from bypassing revocation. Revocation is a trusted Console operation for now.
       allow list, delete: if false;
     }
+    function verifiedPersonal() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email is string && request.auth.token.email.matches('[^@\\s]+@[^@\\s]+')
+        && personalDomain();
+    }
+    function supportedArea(area) {
+      return area in ['local:pune:baner:alacrity', 'local:pune:baner', 'local:pune'];
+    }
+    match /localityMemberships/{uid} {
+      allow get: if owner(uid) && verifiedPersonal();
+      allow create, update: if owner(uid) && verifiedPersonal()
+        && request.resource.data.keys().hasOnly(['areaId']) && supportedArea(request.resource.data.areaId);
+    }
+    function localAccess(board) {
+      let home = get(/databases/$(database)/documents/localityMemberships/$(request.auth.uid)).data.areaId;
+      return supportedArea(home) && (board == home || board == 'local:pune'
+        || (home == 'local:pune:baner:alacrity' && board == 'local:pune:baner'));
+    }
     function activeMember(companyId) {
+      return companyId.matches('local:.*') ? verifiedPersonal() && localAccess(companyId) : activeCompany(companyId);
+    }
+    function activeCompany(companyId) {
       return verifiedCompany(companyId)
         && get(/databases/$(database)/documents/communities/$(companyId)/members/$(request.auth.uid)).data.status == 'active';
     }

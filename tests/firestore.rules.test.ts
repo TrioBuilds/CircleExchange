@@ -161,3 +161,38 @@ describe('company listings', () => {
     await assertFails(getDocs(collection(db, path)));
   });
 });
+
+describe('Pune locality communities', () => {
+  const apartment = 'local:pune:baner:alacrity', baner = 'local:pune:baner', pune = 'local:pune';
+  const personal = (uid: string, email = uid + '@gmail.com', verified = true) =>
+    env.authenticatedContext(uid, { email, email_verified: verified }).firestore();
+  it('allows confirmed residents to publish and browse in their hierarchy and drops old access after a move', async () => {
+    const db = personal('ada');
+    const membership = doc(db, 'localityMemberships/ada');
+    await assertFails(getDocs(query(collection(db,'communities',apartment,'listings'),limit(21))));
+    await assertSucceeds(setDoc(membership,{areaId:apartment}));
+    for (const area of [apartment,baner,pune]) {
+      await assertSucceeds(setDoc(doc(db,'communities',area,'listings','one'),{
+        ownerId:'ada', title:'Book', description:'Paperback', pickup:'Lobby', category:'goods',
+        pricePaise:0, status:'available', createdAt:serverTimestamp()
+      }));
+      await assertSucceeds(getDocs(query(collection(db,'communities',area,'listings'),limit(21))));
+    }
+    await assertFails(getDocs(query(collection(db,'communities','hp','listings'),limit(21))));
+    await assertSucceeds(setDoc(membership,{areaId:pune}));
+    await assertFails(getDoc(doc(db,'communities',apartment,'listings','one')));
+    await assertFails(getDoc(doc(db,'communities',baner,'listings','one')));
+    await assertSucceeds(getDoc(doc(db,'communities',pune,'listings','one')));
+  });
+  it('requires verified personal identity and an owner-selected directory entry', async () => {
+    for(const db of [personal('ada','ada@hp.com'), personal('ada','ada@gmail.com',false), env.unauthenticatedContext().firestore()]) {
+      await assertFails(setDoc(doc(db,'localityMemberships/ada'),{areaId:apartment}));
+    }
+    const ref=doc(personal('ada'),'localityMemberships/ada');
+    await assertFails(setDoc(ref,{areaId:'unknown'}));
+    await assertFails(setDoc(ref,{areaId:pune,latitude:18}));
+    await assertFails(setDoc(doc(personal('bob'),'localityMemberships/ada'),{areaId:pune}));
+    await assertSucceeds(setDoc(ref,{areaId:apartment}));
+    await assertFails(getDoc(doc(personal('bob'),'localityMemberships/ada')));
+  });
+});
