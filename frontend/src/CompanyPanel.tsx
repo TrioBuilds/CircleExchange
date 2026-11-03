@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ensureCompanyMembership, saveWorkDetails, type CompanyMembership } from './services/company';
 import LocalityPanel from './LocalityPanel';
 import { isPersonalEmail } from './companies';
+import Inbox from './Inbox';
 import Listings from './Listings';
 import { friendlyError } from './errors';
 
@@ -11,6 +12,7 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [inboxRevision, setInboxRevision] = useState(0);
   const [busy, setBusy] = useState(false);
   const [workLocation, setWorkLocation] = useState('');
   const [branch, setBranch] = useState('');
@@ -61,7 +63,8 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
         <button className="primary" disabled={busy}>{busy ? 'Saving work details…' : 'Save work details'}</button>
       </form>
       <p className="fine-print">Company email verified means mailbox ownership, not an employer endorsement.</p>
-      <Listings company={membership.company} uid={uid} />
+      <Inbox onDecision={() => setInboxRevision(n => n + 1)} uid={uid} boards={[membership.company]} />
+      <Listings inboxRevision={inboxRevision} company={membership.company} uid={uid} />
     </>}
   </section>;
 }

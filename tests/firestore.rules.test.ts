@@ -1,10 +1,12 @@
+import { inboxPages, type Folder } from '../frontend/src/services/inbox';
+import type { Firestore } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { COMPANIES } from '../frontend/src/companies';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { writeBatch, query, orderBy, limit, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 let env: RulesTestEnvironment;
-beforeAll(async () => { env = await initializeTestEnvironment({ projectId: 'demo-circleexchange', firestore: { host: '127.0.0.1', port: 8080, rules: readFileSync('firestore.rules', 'utf8') } }); });
+beforeAll(async () => { env = await initializeTestEnvironment({ projectId: 'demo-circleexchange', firestore: { host: '127.0.0.1', port: Number(process.env.RULES_TEST_PORT ?? 8080), rules: readFileSync('firestore.rules', 'utf8') } }); });
 beforeEach(async () => { await env.clearFirestore(); });
 afterAll(async () => { await env?.cleanup(); });
 const profile = () => ({ displayName: 'Ada', createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
@@ -233,4 +235,29 @@ describe('private interest requests', () => {
     await assertFails(getDoc(doc(account('third'),path+'/private/reservation')));
     await assertSucceeds(updateDoc(doc(seller,path),{status:'exchanged'}));
   });
+});
+it('shows a prior request in the two participants’ inboxes and reflects the seller decision',async () => {
+  const board = {id:'hp',name:'HP'};
+  const account = (uid:string) => env.authenticatedContext(uid,{email:uid+'@hp.com',email_verified:true}).firestore();
+  const seller = account('seller'), buyer = account('buyer'), other = account('other');
+  const path = 'communities/hp/listings/book';
+  await env.withSecurityRulesDisabled(async ctx => {
+    for(const uid of ['seller','buyer','other']) await setDoc(doc(ctx.firestore(),'communities/hp/members/'+uid),{status:'active'});
+    await setDoc(doc(ctx.firestore(),path),{ownerId:'seller',title:'Paperback',status:'available',createdAt:serverTimestamp()});
+  });
+  await setDoc(doc(buyer,path+'/requests/buyer'),{name:'Ada',status:'pending',createdAt:serverTimestamp()});
+  const inbox = async (db:ReturnType<typeof account>, uid:string, folder:Folder) => {
+    const page = await inboxPages(db as unknown as Firestore,[board],uid,folder).next();
+    return page.value;
+  };
+  expect(await inbox(seller,'seller','Received')).toMatchObject([{title:'Paperback',name:'Ada',status:'pending'}]);
+  expect(await inbox(buyer,'buyer','Sent')).toMatchObject([{status:'pending'}]);
+  expect(await inbox(other,'other','Sent')).toEqual([]);
+  expect(await inbox(other,'other','Received')).toEqual([]);
+  const batch = writeBatch(seller);
+  batch.update(doc(seller,path+'/requests/buyer'),{status:'accepted'});
+  batch.set(doc(seller,path+'/private/reservation'),{buyer:'buyer'});
+  batch.update(doc(seller,path),{status:'reserved'});
+  await assertSucceeds(batch.commit());
+  expect(await inbox(buyer,'buyer','Sent')).toMatchObject([{status:'accepted',available:false}]);
 });

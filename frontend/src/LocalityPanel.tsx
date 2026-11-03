@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { doc, getDocFromServer, setDoc } from 'firebase/firestore';
 import { firebase } from './services/firebase';
 import { areas, hierarchy, suggestArea } from './localities';
+import Inbox from './Inbox';
 import Listings, { type FormDraft } from './Listings';
 
 export default function LocalityPanel({ uid }: { uid: string }) {
@@ -13,6 +14,7 @@ export default function LocalityPanel({ uid }: { uid: string }) {
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState('');
   const [hint, setHint] = useState('');
+  const [inboxRevision, setInboxRevision] = useState(0);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   useEffect(() => {
@@ -72,10 +74,11 @@ export default function LocalityPanel({ uid }: { uid: string }) {
       </> : <>
         <p>Self-selected locality: {permitted.map(area => area.name).join(' → ')}</p>
         <button onClick={() => { setChoice(primary); setEditing(true); }}>Change locality</button>
+        <Inbox onDecision={() => setInboxRevision(n => n + 1)} key={primary} uid={uid} boards={permitted} />
         <label>Community feed<select value={feed} onChange={e => setFeed(e.target.value)}>
           {permitted.map(area => <option key={area.id} value={area.id}>{area.name}</option>)}
         </select></label>
-        {selected && <Listings key={selected.id} company={selected} uid={uid} drafts={drafts.current} />}
+        {selected && <Listings inboxRevision={inboxRevision} key={selected.id} company={selected} uid={uid} drafts={drafts.current} />}
       </>}
   </section>;
 }

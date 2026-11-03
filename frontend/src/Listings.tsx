@@ -7,7 +7,7 @@ const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: '
 
 export type FormDraft = Record<string, string>;
 
-export default function Listings({ company, uid, drafts }: { company: Pick<Company, 'id' | 'name'>; uid: string; drafts?: Map<string, FormDraft> }) {
+export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { company: Pick<Company, 'id' | 'name'>; uid: string; inboxRevision?: number; drafts?: Map<string, FormDraft> }) {
   const [page, setPage] = useState<Page | null>(null);
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -28,7 +28,7 @@ export default function Listings({ company, uid, drafts }: { company: Pick<Compa
       if (active) setError('Could not load listings. Refresh the feed to try again.');
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [company, revision]);
+  }, [company, revision, inboxRevision]);
 
   function refresh() {
     setError('');
