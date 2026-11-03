@@ -13,7 +13,7 @@ export type ListingDraft = {
   pricePaise: number;
   pickup: string;
 };
-export type Listing = ListingDraft & { id: string; ownerId: string; status: 'available' | 'exchanged' };
+export type Listing = ListingDraft & { id: string; ownerId: string; status: 'available' | 'reserved' | 'exchanged' };
 export type Page = { items: Listing[]; next: QueryDocumentSnapshot | null };
 
 function listings(company: Pick<Company, 'id' | 'name'>) {

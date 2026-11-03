@@ -98,9 +98,40 @@ service cloud.firestore {
         && request.resource.data.category in ['goods', 'services']
         && request.resource.data.pricePaise is int
         && request.resource.data.pricePaise >= 0 && request.resource.data.pricePaise <= 100000000;
-      allow update: if activeMember(companyId) && resource.data.ownerId == request.auth.uid
-        && resource.data.status == 'available' && request.resource.data.status == 'exchanged'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      function offerPath() {
+        return /databases/$(database)/documents/communities/$(companyId)/listings/$(listingId);
+      }
+      function reservation() {
+        return /databases/$(database)/documents/communities/$(companyId)/listings/$(listingId)/private/reservation;
+      }
+      function buyerRequest(buyer) {
+        return /databases/$(database)/documents/communities/$(companyId)/listings/$(listingId)/requests/$(buyer);
+      }
+      function seller() {
+        return activeMember(companyId) && get(offerPath()).data.ownerId == request.auth.uid;
+      }
+      allow update: if seller() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && ((resource.data.status in ['available','reserved'] && request.resource.data.status == 'exchanged')
+        || (resource.data.status == 'available' && request.resource.data.status == 'reserved' && existsAfter(reservation())));
+      match /requests/{buyer} {
+        allow get: if activeMember(companyId) && (owner(buyer) || seller());
+        allow list: if seller() && request.query.limit <= 20;
+        allow create: if activeMember(companyId) && owner(buyer) && !seller()
+          && get(offerPath()).data.status == 'available'
+          && request.resource.data.keys().hasOnly(['name','createdAt','status'])
+          && listingText(request.resource.data.name,60) && request.resource.data.createdAt == request.time
+          && request.resource.data.status == 'pending';
+        allow update: if seller() && resource.data.status == 'pending' && get(offerPath()).data.status == 'available'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && (request.resource.data.status == 'declined' || (request.resource.data.status == 'accepted'
+          && getAfter(reservation()).data.buyer == buyer && getAfter(offerPath()).data.status == 'reserved'));
+      }
+      match /private/reservation {
+        allow create: if seller() && request.resource.data.keys().hasOnly(['buyer'])
+          && request.resource.data.buyer is string && get(offerPath()).data.status == 'available'
+          && getAfter(offerPath()).data.status == 'reserved'
+          && getAfter(buyerRequest(request.resource.data.buyer)).data.status == 'accepted';
+      }
     }
     // Other paths remain closed.
     match /{document=**} { allow read, write: if false; }
