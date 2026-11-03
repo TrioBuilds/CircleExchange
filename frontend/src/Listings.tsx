@@ -1,17 +1,22 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import Interest from './Interest';
 import type { Company } from './companies';
 import { categories, loadListings, markExchanged, postListing, type Page } from './services/listings';
 
 const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
-export default function Listings({ company, uid }: { company: Pick<Company, 'id' | 'name'>; uid: string }) {
+export type FormDraft = Record<string, string>;
+
+export default function Listings({ company, uid, drafts }: { company: Pick<Company, 'id' | 'name'>; uid: string; drafts?: Map<string, FormDraft> }) {
   const [page, setPage] = useState<Page | null>(null);
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [free, setFree] = useState(true);
+  const [formVersion,setFormVersion] = useState(0);
+  const draft = drafts?.get(company.id);
+  const [free, setFree] = useState(draft?.offer !== "paid");
 
   useEffect(() => {
     let active = true;
@@ -47,7 +52,8 @@ export default function Listings({ company, uid }: { company: Pick<Company, 'id'
     setError('');
     try {
       await postListing(company, uid, { title, description, category, pickup, pricePaise });
-      form.reset();
+      drafts?.delete(company.id);
+      setFormVersion(v=>v+1);
       setFree(true);
       setNotice('Listing published.');
       refresh();
@@ -80,16 +86,24 @@ export default function Listings({ company, uid }: { company: Pick<Company, 'id'
   return <section aria-label="Community listings">
     <h2>{company.name} listings</h2>
     <p>Offer an item to members of this community. Include a shared pickup point.</p>
-    <form onSubmit={submit}>
-      <label>Title<input name="title" maxLength={100} required /></label>
-      <label>Description<textarea name="description" maxLength={1500} required /></label>
-      <label>Category<select name="category">{categories.map(item => <option key={item}>{item}</option>)}</select></label>
-      <label>Offer type<select value={free ? 'free' : 'paid'} onChange={e => setFree(e.target.value === 'free')}>
+    <form key={formVersion} onSubmit={submit} onChange={event => {
+      const values = Object.fromEntries(new FormData(event.currentTarget)) as FormDraft;
+      drafts?.set(company.id, values);
+    }}>
+      <label>Title<input name="title" defaultValue={draft?.title} maxLength={100} required /></label>
+      <label>Description<textarea name="description" defaultValue={draft?.description} maxLength={1500} required /></label>
+      <label>Category<select name="category" defaultValue={draft?.category}>{categories.map(item => <option key={item}>{item}</option>)}</select></label>
+      <label>Offer type<select name="offer" value={free ? 'free' : 'paid'} onChange={e => setFree(e.target.value === 'free')}>
         <option value="free">Free</option><option value="paid">For sale</option>
       </select></label>
-      {!free && <label>Price (INR)<input name="price" type="number" min="0.01" max="1000000" step="0.01" required /></label>}
-      <label>Pickup location<input name="pickup" maxLength={120} required /></label>
+      {!free && <label>Price (INR)<input name="price" defaultValue={draft?.price} type="number" min="0.01" max="1000000" step="0.01" required /></label>}
+      <label>Pickup location<input name="pickup" defaultValue={draft?.pickup} maxLength={120} required /></label>
       <button className="primary" disabled={busy}>Publish listing</button>
+      <button type="button" disabled={busy} onClick={() => {
+        drafts?.delete(company.id);
+        setFree(true);
+        setFormVersion(v => v + 1);
+      }}>Discard draft</button>
     </form>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
@@ -100,8 +114,9 @@ export default function Listings({ company, uid }: { company: Pick<Company, 'id'
     {page?.items.map(item => <details key={item.id}>
       <summary>{item.title} · {item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)} · {item.status}</summary>
       <p>{item.description}</p><p>{item.category} · Pickup at {item.pickup}</p>
-      {item.ownerId === uid && item.status === 'available' &&
+      {item.ownerId === uid && item.status !== 'exchanged' &&
         <button disabled={busy} onClick={() => void exchange(item.id)}>Mark exchanged</button>}
+      <Interest board={company.id} item={item} uid={uid} refresh={refresh} />
     </details>)}
     {page?.next && <button disabled={busy} onClick={() => void more()}>Load more listings</button>}
   </section>;

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { COMPANIES } from '../frontend/src/companies';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { query, orderBy, limit, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { writeBatch, query, orderBy, limit, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 let env: RulesTestEnvironment;
 beforeAll(async () => { env = await initializeTestEnvironment({ projectId: 'demo-circleexchange', firestore: { host: '127.0.0.1', port: 8080, rules: readFileSync('firestore.rules', 'utf8') } }); });
 beforeEach(async () => { await env.clearFirestore(); });
@@ -194,5 +194,43 @@ describe('Pune locality communities', () => {
     await assertFails(setDoc(doc(personal('bob'),'localityMemberships/ada'),{areaId:pune}));
     await assertSucceeds(setDoc(ref,{areaId:apartment}));
     await assertFails(getDoc(doc(personal('bob'),'localityMemberships/ada')));
+  });
+});
+
+describe('private interest requests', () => {
+  const path = 'communities/hp/listings/book';
+  const account = (uid: string) => env.authenticatedContext(uid,{email:uid+'@hp.com',email_verified:true}).firestore();
+  const request = () => ({name:'Buyer',status:'pending',createdAt:serverTimestamp()});
+  it('keeps requests private and requires acceptance and reservation to commit together', async () => {
+    await env.withSecurityRulesDisabled(async ctx => {
+      for(const id of ['seller','buyer','second','third']) await setDoc(doc(ctx.firestore(),'communities/hp/members/'+id),{status:'active'});
+      await setDoc(doc(ctx.firestore(),path),{ownerId:'seller',status:'available'});
+    });
+    const seller = account('seller'), buyer = account('buyer');
+    const own = doc(buyer,path+'/requests/buyer');
+    await assertSucceeds(setDoc(own,request()));
+    await assertFails(setDoc(own,request()));
+    await assertFails(getDoc(doc(account('second'),path+'/requests/buyer')));
+    await assertFails(getDocs(query(collection(buyer,path+'/requests'),limit(20))));
+    await assertSucceeds(getDocs(query(collection(seller,path+'/requests'),limit(20))));
+    await assertFails(updateDoc(own,{status:'accepted'}));
+    await assertFails(updateDoc(doc(seller,path),{status:'reserved'}));
+    await assertFails(updateDoc(doc(seller,path+'/requests/buyer'),{status:'accepted'}));
+    await assertFails(setDoc(doc(seller,path+'/requests/seller'),request()));
+    await assertSucceeds(setDoc(doc(account('second'),path+'/requests/second'),request()));
+    await assertSucceeds(updateDoc(doc(seller,path+'/requests/second'),{status:'declined'}));
+    await assertSucceeds(setDoc(doc(account('third'),path+'/requests/third'),request()));
+    const accept = (id:string) => {
+      const batch = writeBatch(seller);
+      batch.update(doc(seller,path+'/requests/'+id),{status:'accepted'});
+      batch.set(doc(seller,path+'/private/reservation'),{buyer:id});
+      batch.update(doc(seller,path),{status:'reserved'});
+      return batch.commit();
+    };
+    await assertSucceeds(accept('buyer'));
+    await assertFails(accept('third'));
+    await assertSucceeds(getDoc(own));
+    await assertFails(getDoc(doc(account('third'),path+'/private/reservation')));
+    await assertSucceeds(updateDoc(doc(seller,path),{status:'exchanged'}));
   });
 });

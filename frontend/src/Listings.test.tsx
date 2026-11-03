@@ -34,3 +34,20 @@ it('publishes a priced item, displays its details and lets its owner mark it exc
   expect(markExchanged).toHaveBeenCalledWith(company, item.id);
   expect(await screen.findByText(/Oak desk.*exchanged/)).toBeVisible();
 });
+
+it('restores each feed’s draft after switching away and back', async () => {
+  vi.mocked(loadListings).mockResolvedValue({items:[],next:null});
+  const drafts = new Map();
+  const user = userEvent.setup();
+  const board = (id:string) => <Listings key={id} company={{id,name:id}} uid="ada" drafts={drafts}/>;
+  const view = render(board('Alacrity'));
+  await user.type(screen.getByLabelText('Title'),'My book');
+  await user.selectOptions(screen.getByLabelText('Offer type'),'paid');
+  await user.type(screen.getByLabelText('Price (INR)'),'12.50');
+  view.rerender(board('Baner'));
+  expect(screen.getByLabelText('Title')).toHaveValue('');
+  await user.type(screen.getByLabelText('Title'),'Baner draft');
+  view.rerender(board('Alacrity'));
+  expect(screen.getByLabelText('Title')).toHaveValue('My book');
+  expect(screen.getByLabelText('Price (INR)')).toHaveValue(12.5);
+});

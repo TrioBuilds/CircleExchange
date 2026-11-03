@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { doc, getDocFromServer, setDoc } from 'firebase/firestore';
 import { firebase } from './services/firebase';
 import { areas, hierarchy, suggestArea } from './localities';
-import Listings from './Listings';
+import Listings, { type FormDraft } from './Listings';
 
 export default function LocalityPanel({ uid }: { uid: string }) {
+  const drafts = useRef(new Map<string, FormDraft>());
   const [primary, setPrimary] = useState('');
   const [choice, setChoice] = useState('');
   const [feed, setFeed] = useState('');
@@ -74,7 +75,7 @@ export default function LocalityPanel({ uid }: { uid: string }) {
         <label>Community feed<select value={feed} onChange={e => setFeed(e.target.value)}>
           {permitted.map(area => <option key={area.id} value={area.id}>{area.name}</option>)}
         </select></label>
-        {selected && <Listings key={selected.id} company={selected} uid={uid} />}
+        {selected && <Listings key={selected.id} company={selected} uid={uid} drafts={drafts.current} />}
       </>}
   </section>;
 }
