@@ -84,9 +84,21 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
   }
 
   return <section aria-label="Community listings">
-    <h2>{company.name} listings</h2>
-    <p>Offer an item to members of this community. Include a shared pickup point.</p>
-    <form key={formVersion} onSubmit={submit} onChange={event => {
+    <div className="feed-heading"><div><p className="eyebrow">EXPLORE YOUR CIRCLE</p><h2>{company.name} listings</h2></div><button className="secondary" disabled={busy || loading} onClick={refresh}>Refresh feed</button></div>
+    {loading && <p role="status">Loading listings…</p>}
+    {page?.items.length === 0 && <p className="feed-empty">No listings yet. Be the first to offer something useful.</p>}
+    <div className="listing-grid">{page?.items.map(item => <details className="listing-card" key={item.id}>
+      <summary><span className="listing-title">{item.title}</span><span className="listing-meta"><span>{item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)}</span><span className="status-tag">{item.status}</span></span></summary>
+      <p>{item.description}</p><p>{item.category} · Pickup at {item.pickup}</p>
+      {item.ownerId === uid && item.status !== 'exchanged' &&
+        <button disabled={busy} onClick={() => void exchange(item.id)}>Mark exchanged</button>}
+      <Interest board={company.id} item={item} uid={uid} refresh={refresh} />
+    </details>)}</div>
+    {page?.next && <button disabled={busy} onClick={() => void more()}>Load more listings</button>}
+    <details className="compose" key={company.id}>
+      <summary><span>Offer something to your community</span><small>Free items, goods, and services</small></summary>
+      <p>Include a shared pickup point instead of a private address.</p>
+      <form key={formVersion} onSubmit={submit} onChange={event => {
       const values = Object.fromEntries(new FormData(event.currentTarget)) as FormDraft;
       drafts?.set(company.id, values);
     }}>
@@ -104,20 +116,9 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
         setFree(true);
         setFormVersion(v => v + 1);
       }}>Discard draft</button>
-    </form>
+      </form>
+    </details>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
-    <h3>Community feed</h3>
-    <button disabled={busy || loading} onClick={refresh}>Refresh feed</button>
-    {loading && <p role="status">Loading listings…</p>}
-    {page?.items.length === 0 && <p>No listings yet. Be the first to offer an item.</p>}
-    {page?.items.map(item => <details key={item.id}>
-      <summary>{item.title} · {item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)} · {item.status}</summary>
-      <p>{item.description}</p><p>{item.category} · Pickup at {item.pickup}</p>
-      {item.ownerId === uid && item.status !== 'exchanged' &&
-        <button disabled={busy} onClick={() => void exchange(item.id)}>Mark exchanged</button>}
-      <Interest board={company.id} item={item} uid={uid} refresh={refresh} />
-    </details>)}
-    {page?.next && <button disabled={busy} onClick={() => void more()}>Load more listings</button>}
   </section>;
 }
