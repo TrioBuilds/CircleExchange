@@ -14,6 +14,7 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [category, setCategory] = useState<'' | typeof categories[number]>('');
   const [formVersion,setFormVersion] = useState(0);
   const draft = drafts?.get(company.id);
   const [free, setFree] = useState(draft?.offer !== "paid");
@@ -22,13 +23,13 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
     let active = true;
     setLoading(true);
     setPage(null);
-    loadListings(company).then(result => {
+    loadListings(company, category || undefined).then(result => {
       if (active) setPage(result);
     }).catch(() => {
       if (active) setError('Could not load listings. Refresh the feed to try again.');
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [company, revision, inboxRevision]);
+  }, [company, category, revision, inboxRevision]);
 
   function refresh() {
     setError('');
@@ -66,7 +67,7 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
     setBusy(true);
     setError('');
     try {
-      const next = await loadListings(company, page.next);
+      const next = await loadListings(company, category || undefined, page.next);
       setPage({ items: [...page.items, ...next.items], next: next.next });
     } catch { setError('Could not load more listings. Try again.'); }
     finally { setBusy(false); }
@@ -85,11 +86,14 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
 
   return <section aria-label="Community listings">
     <div className="feed-heading"><div><p className="eyebrow">EXPLORE YOUR CIRCLE</p><h2>{company.name} listings</h2></div><button className="secondary" disabled={busy || loading} onClick={refresh}>Refresh feed</button></div>
+    <label className="feed-filter">Filter by category<select value={category} onChange={event => setCategory(event.target.value as typeof category)}>
+      <option value="">All categories</option>{categories.map(item => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
+    </select></label>
     {loading && <p role="status">Loading listings…</p>}
-    {page?.items.length === 0 && <p className="feed-empty">No listings yet. Be the first to offer something useful.</p>}
+    {page?.items.length === 0 && <p className="feed-empty">{category ? `No ${category} listings yet. Try another category.` : 'No listings yet. Be the first to offer something useful.'}</p>}
     <div className="listing-grid">{page?.items.map(item => <details className="listing-card" key={item.id}>
-      <summary><span className="listing-title">{item.title}</span><span className="listing-meta"><span>{item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)}</span><span className="status-tag">{item.status}</span></span></summary>
-      <p>{item.description}</p><p>{item.category} · Pickup at {item.pickup}</p>
+      <summary><span className="listing-title">{item.title}</span><span className="listing-meta"><span>{item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)}</span><span className="status-tag">{item.status}</span></span><span className="listing-location">{item.category} · Pickup: {item.pickup}</span></summary>
+      <p>{item.description}</p>
       {item.ownerId === uid && item.status !== 'exchanged' &&
         <button disabled={busy} onClick={() => void exchange(item.id)}>Mark exchanged</button>}
       <Interest board={company.id} item={item} uid={uid} refresh={refresh} />

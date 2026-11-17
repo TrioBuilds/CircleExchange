@@ -106,6 +106,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); }
 .feed-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .feed-heading .eyebrow { margin: 0 0 5px; }
 .feed-heading .secondary { margin: 0; }
+.feed-filter { display: block; max-width: 240px; margin: 0 0 18px; }
+.feed-filter select { margin-top: 6px; text-transform: capitalize; }
 .feed-empty { padding: 28px; border: 1px dashed #a8bdab; border-radius: 14px; background: #fff; }
 .listing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
 .listing-card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 15px; background: #fff; overflow-wrap: anywhere; }
@@ -115,6 +117,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); }
 .listing-card summary::after { content: 'View details'; display: block; margin-top: 16px; color: var(--green-dark); font-size: .8rem; font-weight: 700; }
 .listing-card[open] summary::after { content: 'Hide details'; }
 .listing-title { display: block; font-family: Manrope, sans-serif; font-size: 1.08rem; font-weight: 800; }
+.listing-location { display: block; margin-top: 12px; color: var(--muted); font-size: .85rem; text-transform: capitalize; }
 .listing-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; color: var(--green-dark); font-weight: 700; }
 .status-tag { padding: 3px 9px; border-radius: 99px; background: #e4f1e7; font-size: .75rem; text-transform: capitalize; }
 .listing-card > p { max-width: 68ch; }
@@ -142,6 +145,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); }
   .session { justify-content: space-between; }
   .feed-heading { align-items: start; flex-direction: column; }
   .feed-heading .secondary { width: 100%; }
+  .feed-filter { max-width: none; }
   .listing-grid { grid-template-columns: 1fr; }
   .compose > summary small { width: 100%; padding-left: 50px; }
 }
