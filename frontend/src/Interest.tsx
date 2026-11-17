@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { decide, myInterest, requestInterest, requestNames, type InterestStatus } from './services/interest';
 import type { Listing } from './services/listings';
+import Conversation from './Conversation';
 
 export default function Interest({board,item,uid,refresh}:{board:string;item:Listing;uid:string;refresh:()=>void}) {
   const owner = uid === item.ownerId;
@@ -10,6 +11,7 @@ export default function Interest({board,item,uid,refresh}:{board:string;item:Lis
   const [name,setName] = useState('');
   const [status,setStatus] = useState<InterestStatus>();
   const [requests,setRequests] = useState<{uid:string;name:string}[]>([]);
+  const [conversationOpen,setConversationOpen] = useState(false);
   async function run(action:()=>Promise<void>) {
     setBusy(true); setError('');
     try { await action(); } catch { setError('Could not complete this action. Refresh requests and try again.'); }
@@ -37,5 +39,9 @@ export default function Interest({board,item,uid,refresh}:{board:string;item:Lis
         <label>Name to share with the seller<input value={name} onChange={e=>setName(e.target.value)} required maxLength={60}/></label>
         <button disabled={busy || !name.trim()}>I’m interested</button>
       </form>)}
+    {loaded && (owner ? !!requests[0] && item.status !== 'available' : status === 'accepted') && <>
+      <button onClick={() => setConversationOpen(open => !open)}>{conversationOpen ? 'Close conversation' : 'Open conversation'}</button>
+      {conversationOpen && <Conversation board={board} listingId={item.id} uid={uid} />}
+    </>}
   </div>;
 }

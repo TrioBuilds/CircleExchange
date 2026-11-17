@@ -236,6 +236,51 @@ describe('private interest requests', () => {
     await assertSucceeds(updateDoc(doc(seller,path),{status:'exchanged'}));
   });
 });
+describe('accepted listing conversations', () => {
+  const path = 'communities/hp/listings/book';
+  const account = (uid: string) => env.authenticatedContext(uid,{email:uid+'@hp.com',email_verified:true}).firestore();
+  it('limits messages to the active accepted pair and authentic sender', async () => {
+    await env.withSecurityRulesDisabled(async ctx => {
+      const db = ctx.firestore();
+      for (const uid of ['seller','buyer','other']) await setDoc(doc(db,'communities/hp/members/'+uid),{status:'active'});
+      await setDoc(doc(db,path),{ownerId:'seller',status:'reserved'});
+      await setDoc(doc(db,path+'/private/reservation'),{buyer:'buyer'});
+      await setDoc(doc(db,path+'/requests/buyer'),{status:'accepted'});
+    });
+    const seller = account('seller'), buyer = account('buyer'), other = account('other');
+    const messages = path+'/messages';
+    const text = {senderId:'buyer',text:'Meet at the lobby?',createdAt:serverTimestamp()};
+    await assertSucceeds(setDoc(doc(buyer,messages,'one'),text));
+    await assertSucceeds(getDoc(doc(seller,messages,'one')));
+    await assertSucceeds(getDocs(query(collection(buyer,messages),orderBy('createdAt','desc'),limit(30))));
+    await assertFails(getDocs(collection(buyer,messages)));
+    await assertFails(getDoc(doc(other,messages,'one')));
+    await assertFails(setDoc(doc(other,messages,'two'),{...text,senderId:'other'}));
+    await assertFails(setDoc(doc(buyer,messages,'two'),{...text,senderId:'seller'}));
+    await assertFails(setDoc(doc(buyer,messages,'two'),{...text,text:' '}));
+    await assertFails(setDoc(doc(buyer,messages,'two'),{...text,text:'x'.repeat(1001)}));
+    await assertFails(updateDoc(doc(buyer,messages,'one'),{text:'Changed'}));
+    await assertFails(deleteDoc(doc(buyer,messages,'one')));
+    await env.withSecurityRulesDisabled(async ctx => {
+      await updateDoc(doc(ctx.firestore(),'communities/hp/members/buyer'),{status:'revoked'});
+    });
+    await assertFails(getDoc(doc(buyer,messages,'one')));
+    await assertFails(setDoc(doc(buyer,messages,'two'),text));
+  });
+  it('blocks both users before acceptance', async () => {
+    await env.withSecurityRulesDisabled(async ctx => {
+      const db = ctx.firestore();
+      for (const uid of ['seller','buyer']) await setDoc(doc(db,'communities/hp/members/'+uid),{status:'active'});
+      await setDoc(doc(db,path),{ownerId:'seller',status:'available'});
+      await setDoc(doc(db,path+'/requests/buyer'),{status:'pending'});
+    });
+    for (const uid of ['seller','buyer']) {
+      const db = account(uid);
+      await assertFails(getDocs(query(collection(db,path+'/messages'),limit(30))));
+      await assertFails(setDoc(doc(db,path+'/messages/one'),{senderId:uid,text:'Hello',createdAt:serverTimestamp()}));
+    }
+  });
+});
 it('shows a prior request in the two participants’ inboxes and reflects the seller decision',async () => {
   const board = {id:'hp',name:'HP'};
   const account = (uid:string) => env.authenticatedContext(uid,{email:uid+'@hp.com',email_verified:true}).firestore();
