@@ -29,11 +29,23 @@ it('publishes a priced item, displays its details and lets its owner mark it exc
   await user.click(screen.getByRole('button', { name: 'Publish listing' }));
   expect(postListing).toHaveBeenCalledWith(company, 'ada', { title: item.title, description: item.description,
     category: item.category, pickup: item.pickup, pricePaise: 12550 });
+  expect(await screen.findByText('goods · Pickup: Office lobby')).toBeVisible();
   await user.click(await screen.findByText('Oak desk'));
   expect(screen.getByText(item.description)).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Mark exchanged' }));
   expect(markExchanged).toHaveBeenCalledWith(company, item.id);
   expect(await screen.findByText('exchanged')).toBeVisible();
+});
+
+it('filters the feed by category before loading listings', async () => {
+  const company = COMPANIES[0];
+  vi.mocked(loadListings).mockResolvedValue({ items: [], next: null });
+  const user = userEvent.setup();
+  render(<Listings company={company} uid="ada" />);
+  await screen.findByText(/No listings yet/);
+  await user.selectOptions(screen.getByLabelText('Filter by category'), 'services');
+  expect(loadListings).toHaveBeenLastCalledWith(company, 'services');
+  expect(await screen.findByText('No services listings yet. Try another category.')).toBeVisible();
 });
 
 it('restores each feed’s draft after switching away and back', async () => {

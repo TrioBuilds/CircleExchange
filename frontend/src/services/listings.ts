@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDocsFromServer, limit, orderBy, query, serverTimestamp,
+  collection, doc, getDocsFromServer, limit, orderBy, query, serverTimestamp, where,
   setDoc, startAfter, updateDoc, type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
@@ -21,9 +21,9 @@ function listings(company: Pick<Company, 'id' | 'name'>) {
   return collection(firebase.db, 'communities', company.id, 'listings');
 }
 
-export async function loadListings(company: Pick<Company, 'id' | 'name'>, after?: QueryDocumentSnapshot): Promise<Page> {
+export async function loadListings(company: Pick<Company, 'id' | 'name'>, category?: ListingDraft['category'], after?: QueryDocumentSnapshot): Promise<Page> {
   const pageSize = 20;
-  const result = await getDocsFromServer(query(listings(company), orderBy('createdAt', 'desc'),
+  const result = await getDocsFromServer(query(listings(company), ...(category ? [where('category', '==', category)] : []), orderBy('createdAt', 'desc'),
     ...(after ? [startAfter(after)] : []), limit(pageSize + 1)));
   const page = result.docs.slice(0, pageSize);
   return {
