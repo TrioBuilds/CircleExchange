@@ -4,6 +4,7 @@ import { firebase } from './services/firebase';
 import { areas, hierarchy, suggestArea } from './localities';
 import Inbox from './Inbox';
 import Listings, { type FormDraft } from './Listings';
+import { linkedListing } from './listingLink';
 
 export default function LocalityPanel({ uid }: { uid: string }) {
   const drafts = useRef(new Map<string, FormDraft>());
@@ -25,7 +26,8 @@ export default function LocalityPanel({ uid }: { uid: string }) {
       const snapshot = await getDocFromServer(doc(firebase.db, 'localityMemberships', uid));
       if (!active) return;
       const current = snapshot.data()?.areaId ?? '';
-      setPrimary(current); setFeed(current); setChoice(current); setReady(true);
+      const linkedBoard = linkedListing()?.board;
+      setPrimary(current); setFeed(hierarchy(current).some(area => area.id === linkedBoard) ? linkedBoard! : current); setChoice(current); setReady(true);
     }
     void load().catch(() => { if (active) setError('Could not load your locality.'); });
     return () => { active = false; };
@@ -56,6 +58,7 @@ export default function LocalityPanel({ uid }: { uid: string }) {
 
   const permitted = hierarchy(primary);
   const selected = permitted.find(area => area.id === feed);
+  const link = linkedListing();
   return <section aria-label="Locality community">
     <h2>Your locality community</h2>
     {error && <p role="alert">{error}</p>}
@@ -73,12 +76,13 @@ export default function LocalityPanel({ uid }: { uid: string }) {
         {primary && <button disabled={busy} onClick={() => setEditing(false)}>Cancel</button>}
       </> : <>
         <p>Self-selected locality: {permitted.map(area => area.name).join(' → ')}</p>
-        <button onClick={() => { setChoice(primary); setEditing(true); }}>Change locality</button>
+        {link && !permitted.some(area => area.id === link.board) && <p role="alert">This listing is outside your selected community. <a href="/">Return to your feed</a></p>}
+        {!link && <><button onClick={() => { setChoice(primary); setEditing(true); }}>Change locality</button>
         <label>Community feed<select value={feed} onChange={e => setFeed(e.target.value)}>
           {permitted.map(area => <option key={area.id} value={area.id}>{area.name}</option>)}
-        </select></label>
-        {selected && <Listings inboxRevision={inboxRevision} key={selected.id} company={selected} uid={uid} drafts={drafts.current} />}
-        <Inbox onDecision={() => setInboxRevision(n => n + 1)} key={'inbox:' + primary} uid={uid} boards={permitted} />
+        </select></label></>}
+        {selected && (!link || link.board === selected.id) && <Listings inboxRevision={inboxRevision} key={selected.id} company={selected} uid={uid} drafts={drafts.current} />}
+        {!link && <Inbox onDecision={() => setInboxRevision(n => n + 1)} key={'inbox:' + primary} uid={uid} boards={permitted} />}
       </>}
   </section>;
 }

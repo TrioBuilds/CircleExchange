@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import LocalityPanel from './LocalityPanel';
 import { suggestArea } from './localities';
 const mocks = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
 vi.mock('firebase/firestore', () => ({ doc: vi.fn(), setDoc: mocks.save, getDocFromServer: mocks.load }));
 vi.mock('./services/firebase', () => ({ firebase: { db: {} } }));
 vi.mock('./Listings', () => ({ default: ({company}: {company:{name:string}}) => <p>{company.name} listings</p> }));
+afterEach(() => { window.history.replaceState({}, '', '/'); });
 it('offers manual selection after location denial, confirms before saving and opens the chosen feed', async () => {
   mocks.load.mockResolvedValue({data: () => undefined});
   const geo = vi.fn((_success, denied) => denied());
@@ -29,4 +30,11 @@ it('suggests Baner nearby and leaves distant, imprecise and boundary readings un
   expect(suggestArea(12,77,10)).toBeNull();
   expect(suggestArea(18.56,73.79028,1500)).toBeNull();
   expect(suggestArea(18.582,73.79028,150)).toBeNull();
+});
+it('opens a linked parent feed only when the member can access it', async () => {
+  window.history.replaceState({}, '', '/?board=local%3Apune%3Abaner&listing=desk');
+  mocks.load.mockResolvedValue({ data: () => ({ areaId: 'local:pune:baner:alacrity' }) });
+  render(<LocalityPanel uid="ada" />);
+  expect(await screen.findByText('Baner listings')).toBeVisible();
+  expect(screen.queryByLabelText('Community feed')).not.toBeInTheDocument();
 });

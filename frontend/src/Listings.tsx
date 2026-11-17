@@ -1,14 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Interest from './Interest';
 import type { Company } from './companies';
-import { categories, loadListings, markExchanged, postListing, type Page } from './services/listings';
+import { linkedListing, listingUrl } from './listingLink';
+import { categories, loadListing, loadListings, markExchanged, postListing, type Listing, type Page } from './services/listings';
 
 const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
 export type FormDraft = Record<string, string>;
 
 export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { company: Pick<Company, 'id' | 'name'>; uid: string; inboxRevision?: number; drafts?: Map<string, FormDraft> }) {
+  const link = linkedListing();
+  const linkedId = link?.board === company.id ? link.listing : '';
   const [page, setPage] = useState<Page | null>(null);
+  const [linkedItem, setLinkedItem] = useState<Listing | null>(null);
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -23,13 +27,16 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
     let active = true;
     setLoading(true);
     setPage(null);
-    loadListings(company, category || undefined).then(result => {
-      if (active) setPage(result);
+    setLinkedItem(null);
+    (linkedId ? loadListing(company, linkedId) : loadListings(company, category || undefined)).then(result => {
+      if (!active) return;
+      if (linkedId) setLinkedItem(result as Listing | null);
+      else setPage(result as Page);
     }).catch(() => {
-      if (active) setError('Could not load listings. Refresh the feed to try again.');
+      if (active) setError(linkedId ? 'This listing is unavailable or outside your community.' : 'Could not load listings. Refresh the feed to try again.');
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [company, category, revision, inboxRevision]);
+  }, [company, category, linkedId, revision, inboxRevision]);
 
   function refresh() {
     setError('');
@@ -84,6 +91,32 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
     finally { setBusy(false); }
   }
 
+  async function copyLink(id: string) {
+    try { await navigator.clipboard.writeText(listingUrl(company.id, id)); setNotice('Link copied.'); }
+    catch { setError('Could not copy the link. Copy it from your address bar instead.'); }
+  }
+
+  function card(item: Listing, focused = false) {
+    return <details className="listing-card" key={item.id} open={focused ? true : undefined}>
+      <summary><span className="listing-title">{item.title}</span><span className="listing-meta"><span>{item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)}</span><span className="status-tag">{item.status}</span></span><span className="listing-location">{item.category} · Pickup: {item.pickup}</span></summary>
+      <p>{item.description}</p>
+      {!focused && <a href={listingUrl(company.id, item.id)}>Open shareable page</a>}
+      {focused && <button onClick={() => void copyLink(item.id)}>Copy listing link</button>}
+      {item.ownerId === uid && item.status !== 'exchanged' &&
+        <button disabled={busy} onClick={() => void exchange(item.id)}>Mark exchanged</button>}
+      <Interest board={company.id} item={item} uid={uid} refresh={refresh} autoLoad={focused} />
+    </details>;
+  }
+
+  if (linkedId) return <section aria-label="Listing details" className="listing-page">
+    <a href="/">← Back to your feed</a>
+    {loading && <p role="status">Loading listing…</p>}
+    {!loading && !linkedItem && <p role="alert">{error || 'This listing is no longer available.'}</p>}
+    {linkedItem && card(linkedItem, true)}
+    {notice && <p role="status">{notice}</p>}
+    {error && linkedItem && <p role="alert">{error}</p>}
+  </section>;
+
   return <section aria-label="Community listings">
     <div className="feed-heading"><div><p className="eyebrow">EXPLORE YOUR CIRCLE</p><h2>{company.name} listings</h2></div><button className="secondary" disabled={busy || loading} onClick={refresh}>Refresh feed</button></div>
     <label className="feed-filter">Filter by category<select value={category} onChange={event => setCategory(event.target.value as typeof category)}>
@@ -91,13 +124,7 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
     </select></label>
     {loading && <p role="status">Loading listings…</p>}
     {page?.items.length === 0 && <p className="feed-empty">{category ? `No ${category} listings yet. Try another category.` : 'No listings yet. Be the first to offer something useful.'}</p>}
-    <div className="listing-grid">{page?.items.map(item => <details className="listing-card" key={item.id}>
-      <summary><span className="listing-title">{item.title}</span><span className="listing-meta"><span>{item.pricePaise === 0 ? 'Free' : currency.format(item.pricePaise / 100)}</span><span className="status-tag">{item.status}</span></span><span className="listing-location">{item.category} · Pickup: {item.pickup}</span></summary>
-      <p>{item.description}</p>
-      {item.ownerId === uid && item.status !== 'exchanged' &&
-        <button disabled={busy} onClick={() => void exchange(item.id)}>Mark exchanged</button>}
-      <Interest board={company.id} item={item} uid={uid} refresh={refresh} />
-    </details>)}</div>
+    <div className="listing-grid">{page?.items.map(item => card(item))}</div>
     {page?.next && <button disabled={busy} onClick={() => void more()}>Load more listings</button>}
     <details className="compose" key={company.id}>
       <summary><span>Offer something to your community</span><small>Free items, goods, and services</small></summary>

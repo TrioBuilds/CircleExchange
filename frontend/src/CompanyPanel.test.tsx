@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks=vi.hoisted(() => ({ ensure: vi.fn(), save: vi.fn() }));
 vi.mock('./services/company', () => ({ ensureCompanyMembership: mocks.ensure, saveWorkDetails: mocks.save }));
 vi.mock('./Listings', () => ({ default: () => null }));
 import CompanyPanel from './CompanyPanel';
 const membership = { company: {id:'hp',name:'HP',domain:'hp.com'}, status:'active',workLocation:'',branch:'' };
 beforeEach(() => { vi.clearAllMocks(); mocks.ensure.mockResolvedValue(membership); mocks.save.mockResolvedValue(undefined); });
+afterEach(() => { window.history.replaceState({}, '', '/'); });
 it('automatically joins without an approval button and saves optional work details', async () => {
   const user=userEvent.setup(); render(<CompanyPanel uid="ada" />);
   expect(await screen.findByRole('heading',{name:'Welcome to the HP community.'})).toBeInTheDocument();
@@ -39,4 +40,10 @@ it('does not restore a revoked membership or offer editing', async () => {
   mocks.ensure.mockResolvedValue({...membership,status:'revoked'}); render(<CompanyPanel uid="ada" />);
   expect(await screen.findByRole('heading',{name:'HP community access paused'})).toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'Save work details'})).not.toBeInTheDocument();
+});
+it('does not open a listing from another company community', async () => {
+  window.history.replaceState({}, '', '/?board=google&listing=desk');
+  render(<CompanyPanel uid="ada" />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('outside your community');
+  expect(screen.queryByLabelText('Work location (optional)')).not.toBeInTheDocument();
 });

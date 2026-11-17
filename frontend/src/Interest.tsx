@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { decide, myInterest, requestInterest, requestNames, type InterestStatus } from './services/interest';
 import type { Listing } from './services/listings';
 import Conversation from './Conversation';
 
-export default function Interest({board,item,uid,refresh}:{board:string;item:Listing;uid:string;refresh:()=>void}) {
+export default function Interest({board,item,uid,refresh,autoLoad = false}:{board:string;item:Listing;uid:string;refresh:()=>void;autoLoad?:boolean}) {
   const owner = uid === item.ownerId;
   const [loaded,setLoaded] = useState(false);
   const [busy,setBusy] = useState(false);
@@ -22,6 +22,7 @@ export default function Interest({board,item,uid,refresh}:{board:string;item:Lis
     else setStatus(await myInterest(board,item.id,uid));
     setLoaded(true);
   }
+  useEffect(() => { if (autoLoad) void run(load); }, [autoLoad]);
   return <div>
     <button disabled={busy} onClick={() => void run(load)}>{loaded ? 'Refresh requests' : owner ? 'View interest requests' : 'View my interest'}</button>
     {error && <p role="alert">{error}</p>}
