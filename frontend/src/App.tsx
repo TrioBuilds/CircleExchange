@@ -15,14 +15,15 @@ function Notice({ error, message }: { error: string; message: string }) {
 function Shell({ children, user }: { children: ReactNode; user?: User | null }) {
   const [error, setError] = useState('');
   return <div className="app-shell">
+    <a className="skip-link" href="#main-content">Skip to content</a>
     <aside className="sidebar">
-      <a className="brand" href="/" aria-label="CircleExchange home"><span className="brand-icon">↔</span><span>Circle<span className="brand-light">Exchange</span></span></a>
+      <a className="brand" href="/" aria-label="CircleExchange home"><span className="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M6 11h19m0 0-5-5m5 5-5 5M26 21H7m0 0 5-5m-5 5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>Circle<span className="brand-light">Exchange</span></span></a>
       <div className="workspace-label">YOUR WORKSPACE</div>
-      <div className="nav-active"><span>◉</span> My account</div>
+      <div className="nav-active"><span className="nav-dot" aria-hidden="true" /> My account</div>
       <p className="sidebar-caption">A little closer.<br />A lot more useful.</p>
       <div className="sidebar-note"><span className="dot" /> First steps<br /><small>Verify your email. Find your circle.</small></div>
     </aside>
-    <main>
+    <main id="main-content">
       <header><span>Workspace <span className="separator">/</span> My account</span><span className="phase">EARLY ACCESS</span></header>
       <div className="content">
         {user && <div className="session"><span>{user.email}</span><button className="text-button" onClick={() => { setError(''); void signOut(firebase!.auth).catch((err: unknown) => setError(friendlyError(err))); }}>Sign out</button></div>}
@@ -120,11 +121,11 @@ function Profile({ user }: { user: User }) {
     try { await saveProfile(user.uid, name); setName(name.trim()); setMessage('Your profile is saved.'); }
     catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
-  return <><p className="eyebrow">YOUR ACCOUNT</p><h1>Make yourself at home.</h1><p className="intro">A simple profile. A good place to begin.</p><div className="account-grid">
+  return <><p className="eyebrow">YOUR WORKSPACE</p><h1>Make yourself at home.</h1><p className="intro">Your circle, requests, and offers in one place.</p><div className="profile-stack">
+    <CompanyPanel key={user.uid + user.email} uid={user.uid} email={user.email} />
     <section className="card"><div className="card-heading"><span className="step">03</span><h2>Your profile</h2></div><span className="verified">✓ Email verified</span>
       <form onSubmit={(event) => void submit(event)}><label htmlFor="name">Display name</label><input id="name" autoComplete="nickname" required minLength={2} maxLength={60} value={name} disabled={loading || loadFailed} onChange={(e) => setName(e.target.value)} /><small>Between 2 and 60 characters. Your profile is currently private.</small><Notice error={error} message={message} />{loadFailed ? <button type="button" className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry loading profile</button> : <button className="primary" disabled={busy || loading || name.trim().length < 2}>{loading ? 'Loading profile…' : busy ? 'Saving…' : 'Save profile'}</button>}</form>
     </section>
-    <CompanyPanel key={user.uid + user.email} uid={user.uid} email={user.email} />
   </div></>;
 }
 

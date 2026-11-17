@@ -74,11 +74,11 @@ export default function LocalityPanel({ uid }: { uid: string }) {
       </> : <>
         <p>Self-selected locality: {permitted.map(area => area.name).join(' → ')}</p>
         <button onClick={() => { setChoice(primary); setEditing(true); }}>Change locality</button>
-        <Inbox onDecision={() => setInboxRevision(n => n + 1)} key={primary} uid={uid} boards={permitted} />
         <label>Community feed<select value={feed} onChange={e => setFeed(e.target.value)}>
           {permitted.map(area => <option key={area.id} value={area.id}>{area.name}</option>)}
         </select></label>
         {selected && <Listings inboxRevision={inboxRevision} key={selected.id} company={selected} uid={uid} drafts={drafts.current} />}
+        <Inbox onDecision={() => setInboxRevision(n => n + 1)} key={'inbox:' + primary} uid={uid} boards={permitted} />
       </>}
   </section>;
 }
