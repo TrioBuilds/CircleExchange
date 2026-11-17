@@ -6,6 +6,7 @@ import { decide, myInterest, requestInterest, requestNames } from './services/in
 vi.mock('./services/interest', () => ({
   myInterest:vi.fn(), requestNames:vi.fn(), requestInterest:vi.fn(), decide:vi.fn(),
 }));
+vi.mock('./Conversation', () => ({ default: () => <p>Conversation loaded</p> }));
 const item = {id:'book',ownerId:'seller',title:'Book',status:'available',category:'goods',
   description:'Paperback',pricePaise:0,pickup:'Lobby'} as const;
 it('sends one request with the name chosen by the buyer', async () => {
@@ -27,4 +28,12 @@ it('shows the seller pending requests and refreshes the offer after acceptance',
   await user.click(await screen.findByRole('button',{name:'Accept'}));
   expect(decide).toHaveBeenCalledWith('hp','book','buyer',true);
   expect(refresh).toHaveBeenCalled();
+});
+it('opens a conversation only for an accepted request', async () => {
+  vi.mocked(myInterest).mockResolvedValue('accepted');
+  const user = userEvent.setup();
+  render(<Interest board="hp" item={{...item,status:'reserved'}} uid="buyer" refresh={vi.fn()}/>);
+  await user.click(screen.getByRole('button',{name:'View my interest'}));
+  await user.click(await screen.findByRole('button',{name:'Open conversation'}));
+  expect(screen.getByText('Conversation loaded')).toBeVisible();
 });

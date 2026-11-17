@@ -12,7 +12,7 @@ Old plans in `documentation/archive/` are historical only.
 - [x] Implement explicit email verification and token refresh.
 - [x] Implement private persistent profiles with server-enforced field restrictions.
 - [x] Add emulator setup, test suites, CI, and Firebase Hosting configuration.
-- [ ] Configure the owner's Firebase Spark project and deploy after local verification.
+- [x] Configure the owner's Firebase Spark project and deploy after local verification.
 - [ ] Validate real email delivery and hosted account flow against that project.
 
 ## Milestone 2 — Automatic company onboarding
@@ -23,7 +23,7 @@ Old plans in `documentation/archive/` are historical only.
 - [x] Show clear waiting states for personal and unsupported email domains.
 - [x] Enforce domain, UID, immutable role and revoked-status protections in Firestore.
 - [x] Add application and emulator authorization tests.
-- [ ] Merge PR and validate deployed onboarding.
+- [x] Merge PR and validate deployed onboarding.
 
 Residential communities, membership requests and administrator tooling are deferred. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
 
@@ -38,9 +38,9 @@ Acceptance: two approved users can publish and browse listings without cross-com
 
 ## Milestone 4 — Private conversations
 
-- [ ] Add listing-linked conversations with exactly two approved participants.
-- [ ] Add bounded message history and active-conversation realtime subscriptions.
-- [ ] Test sender impersonation, unauthorized reading and revoked-member behavior.
+- [x] Add listing-linked conversations for the accepted buyer and seller.
+- [x] Add bounded message history and active-conversation realtime subscriptions.
+- [x] Test sender impersonation, unauthorized reading and revoked-member behavior.
 
 ## Milestone 5 — Pilot readiness
 

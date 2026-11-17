@@ -132,6 +132,21 @@ service cloud.firestore {
           && getAfter(offerPath()).data.status == 'reserved'
           && getAfter(buyerRequest(request.resource.data.buyer)).data.status == 'accepted';
       }
+      function participant() {
+        let buyer = get(reservation()).data.buyer;
+        return activeMember(companyId) && buyer is string
+          && (request.auth.uid == get(offerPath()).data.ownerId || request.auth.uid == buyer)
+          && get(buyerRequest(buyer)).data.status == 'accepted';
+      }
+      match /messages/{messageId} {
+        allow get: if participant();
+        allow list: if participant() && request.query.limit <= 30;
+        allow create: if participant()
+          && request.resource.data.keys().hasOnly(['senderId', 'text', 'createdAt'])
+          && request.resource.data.senderId == request.auth.uid
+          && listingText(request.resource.data.text, 1000)
+          && request.resource.data.createdAt == request.time;
+      }
     }
     // Other paths remain closed.
     match /{document=**} { allow read, write: if false; }

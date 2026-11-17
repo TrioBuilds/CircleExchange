@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { firebase } from './services/firebase';
 import { decide } from './services/interest';
 import { inboxPages, type Board, type Entry, type Folder } from './services/inbox';
+import Conversation from './Conversation';
 
 export default function Inbox({ boards, uid, onDecision }: { boards: Board[]; uid: string; onDecision?: () => void }) {
   const [folder,setFolder] = useState<Folder>('Received');
@@ -10,6 +11,7 @@ export default function Inbox({ boards, uid, onDecision }: { boards: Board[]; ui
   const [busy,setBusy] = useState(false);
   const [done,setDone] = useState(false);
   const [error,setError] = useState('');
+  const [conversation,setConversation] = useState('');
   const reader = useRef<ReturnType<typeof inboxPages> | null>(null);
   useEffect(() => () => { reader.current = null; }, []);
 
@@ -29,6 +31,7 @@ export default function Inbox({ boards, uid, onDecision }: { boards: Board[]; ui
   function start(next: Folder) {
     if (!firebase) return;
     setOpen(true); setFolder(next); setEntries([]); setDone(false);
+    setConversation('');
     const stream = inboxPages(firebase.db,boards,uid,next);
     reader.current = stream;
     void read(stream,true);
@@ -61,6 +64,12 @@ export default function Inbox({ boards, uid, onDecision }: { boards: Board[]; ui
         {folder === 'Received' && row.available && row.status === 'pending' && <>
           <button disabled={busy} onClick={()=>void respond(row,true)}>Accept</button>
           <button disabled={busy} onClick={()=>void respond(row,false)}>Decline</button>
+        </>}
+        {row.status === 'accepted' && <>
+          <button onClick={() => setConversation(current => current === row.board.id + '/' + row.listingId ? '' : row.board.id + '/' + row.listingId)}>
+            {conversation === row.board.id + '/' + row.listingId ? 'Close conversation' : 'Open conversation'}
+          </button>
+          {conversation === row.board.id + '/' + row.listingId && <Conversation board={row.board.id} listingId={row.listingId} uid={uid} />}
         </>}
       </article>)}
       {!done && <button disabled={busy} onClick={()=>reader.current && void read(reader.current,false)}>Load more requests</button>}

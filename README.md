@@ -4,7 +4,7 @@ A browser-based community marketplace, built in small, testable milestones.
 
 ## Current status
 
-Milestone 1 implements email/password registration, sign-in, password reset, explicit email verification, and a private Firestore profile. Verified work addresses automatically join the community for their exact domain and can save optional work details. Known personal email providers stay outside workplace communities. Active members can publish free or INR-priced listings, browse their company feed and mark their own items exchanged. Residential approval and messaging remain planned. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
+The hosted web app supports email/password accounts, verified work-domain communities, and a self-selected Pune locality pilot for personal email users. Members can publish free or INR-priced listings, browse their community feeds, request an item, and accept or decline requests. Accepted buyers and sellers can coordinate in a private listing conversation. Residential administration, reporting, and broader pilot safeguards remain planned. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
 
 ## Stack
 
@@ -47,4 +47,4 @@ Stop running emulators before `test:rules`, which starts its own isolated instan
 - [Small-task roadmap](todolist.md): current and next milestones.
 - [Archived plans](documentation/archive/): historical context only; not current implementation instructions.
 
-Free hosting means staying within provider quotas, not unlimited capacity. Keep the Firebase project on Spark with no billing account. Deployments require your own project configuration and Firebase login; this repository does not contain production credentials or claim an existing deployment.
+Free hosting means staying within provider quotas, not unlimited capacity. Keep the Firebase project on Spark with no billing account. Production is hosted at https://circle-exchange.web.app/. Deployments from main require project configuration and short-lived Google credentials; this repository does not contain production credentials.
