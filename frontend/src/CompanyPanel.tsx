@@ -4,6 +4,7 @@ import LocalityPanel from './LocalityPanel';
 import { isPersonalEmail } from './companies';
 import Inbox from './Inbox';
 import Listings from './Listings';
+import { linkedListing } from './listingLink';
 import { friendlyError } from './errors';
 
 export default function CompanyPanel({ uid, email }: { uid: string; email?: string | null }) {
@@ -16,6 +17,7 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
   const [busy, setBusy] = useState(false);
   const [workLocation, setWorkLocation] = useState('');
   const [branch, setBranch] = useState('');
+  const link = linkedListing();
   useEffect(() => {
     let active = true;
     setLoading(true); setError(''); setMembership(null);
@@ -52,8 +54,9 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
       <h2>Welcome to the {membership.company.name} community.</h2>
       <span className="verified">✓ Company email verified</span>
       <p>You’ve joined automatically with your verified <strong>@{membership.company.domain}</strong> email. No approval request is needed.</p>
-      <Listings inboxRevision={inboxRevision} company={membership.company} uid={uid} />
-      <Inbox onDecision={() => setInboxRevision(n => n + 1)} uid={uid} boards={[membership.company]} />
+      {link && link.board !== membership.company.id && <p role="alert">This listing is outside your community. <a href="/">Return to your feed</a></p>}
+      {(!link || link.board === membership.company.id) && <Listings inboxRevision={inboxRevision} company={membership.company} uid={uid} />}
+      {!link && <><Inbox onDecision={() => setInboxRevision(n => n + 1)} uid={uid} boards={[membership.company]} />
       <form onSubmit={(event) => void save(event)}>
         <label htmlFor="work-location">Work location (optional)</label>
         <input id="work-location" placeholder="e.g. Bengaluru" maxLength={80} value={workLocation} onChange={(event) => setWorkLocation(event.target.value)} />
@@ -64,7 +67,7 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
         {message && <p className="notice" role="status">{message}</p>}
         <button className="primary" disabled={busy}>{busy ? 'Saving work details…' : 'Save work details'}</button>
       </form>
-      <p className="fine-print">Company email verified means mailbox ownership, not an employer endorsement.</p>
+      <p className="fine-print">Company email verified means mailbox ownership, not an employer endorsement.</p></>}
     </>}
   </section>;
 }

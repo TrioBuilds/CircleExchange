@@ -7,6 +7,7 @@ import { configuration, firebase } from './services/firebase';
 import { loadProfile, saveProfile } from './services/profile';
 import { friendlyError } from './errors';
 import CompanyPanel from './CompanyPanel';
+import { linkedListing } from './listingLink';
 
 function Notice({ error, message }: { error: string; message: string }) {
   return <>{error && <p className="notice error" role="alert">{error}</p>}{message && <p className="notice" role="status">{message}</p>}</>;
@@ -101,6 +102,7 @@ function Verification({ user, onVerified }: { user: User; onVerified: () => void
 }
 
 function Profile({ user }: { user: User }) {
+  const listingLink = linkedListing();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -121,11 +123,11 @@ function Profile({ user }: { user: User }) {
     try { await saveProfile(user.uid, name); setName(name.trim()); setMessage('Your profile is saved.'); }
     catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
-  return <><p className="eyebrow">YOUR WORKSPACE</p><h1>Make yourself at home.</h1><p className="intro">Your circle, requests, and offers in one place.</p><div className="profile-stack">
+  return <><p className="eyebrow">YOUR WORKSPACE</p><h1>{listingLink ? 'An offer in your circle.' : 'Make yourself at home.'}</h1><p className="intro">{listingLink ? 'Sign in and verify your email to view community offers.' : 'Your circle, requests, and offers in one place.'}</p><div className="profile-stack">
     <CompanyPanel key={user.uid + user.email} uid={user.uid} email={user.email} />
-    <section className="card"><div className="card-heading"><span className="step">03</span><h2>Your profile</h2></div><span className="verified">✓ Email verified</span>
+    {!listingLink && <section className="card"><div className="card-heading"><span className="step">03</span><h2>Your profile</h2></div><span className="verified">✓ Email verified</span>
       <form onSubmit={(event) => void submit(event)}><label htmlFor="name">Display name</label><input id="name" autoComplete="nickname" required minLength={2} maxLength={60} value={name} disabled={loading || loadFailed} onChange={(e) => setName(e.target.value)} /><small>Between 2 and 60 characters. Your profile is currently private.</small><Notice error={error} message={message} />{loadFailed ? <button type="button" className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry loading profile</button> : <button className="primary" disabled={busy || loading || name.trim().length < 2}>{loading ? 'Loading profile…' : busy ? 'Saving…' : 'Save profile'}</button>}</form>
-    </section>
+    </section>}
   </div></>;
 }
 

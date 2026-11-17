@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDocsFromServer, limit, orderBy, query, serverTimestamp, where,
+  collection, doc, getDocFromServer, getDocsFromServer, limit, orderBy, query, serverTimestamp, where,
   setDoc, startAfter, updateDoc, type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
@@ -30,6 +30,11 @@ export async function loadListings(company: Pick<Company, 'id' | 'name'>, catego
     items: page.map(snapshot => ({ ...snapshot.data(), id: snapshot.id }) as Listing),
     next: result.size > pageSize ? page[page.length - 1] : null,
   };
+}
+
+export async function loadListing(company: Pick<Company, 'id' | 'name'>, id: string): Promise<Listing | null> {
+  const snapshot = await getDocFromServer(doc(listings(company), id));
+  return snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } as Listing : null;
 }
 
 export async function postListing(company: Pick<Company, 'id' | 'name'>, uid: string, draft: ListingDraft) {
