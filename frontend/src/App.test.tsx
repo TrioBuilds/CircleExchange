@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ user: null as null | { uid: string; email: string; emailVerified: boolean }, register: vi.fn(), login: vi.fn(), reset: vi.fn(), load: vi.fn(), save: vi.fn() }));
 vi.mock('./services/firebase', () => ({ configuration: { ready: true }, firebase: { auth: {}, db: {} } }));
 vi.mock('./services/profile', () => ({ loadProfile: mocks.load, saveProfile: mocks.save }));
@@ -12,6 +12,7 @@ vi.mock('firebase/auth', () => ({
 vi.mock('./services/company', () => ({ ensureCompanyMembership: vi.fn().mockResolvedValue(null), saveWorkDetails: vi.fn() }));
 import App from './App';
 beforeEach(() => { vi.clearAllMocks(); mocks.user = null; mocks.load.mockResolvedValue('Ada'); mocks.save.mockResolvedValue(undefined); });
+afterEach(() => { window.history.replaceState({}, '', '/'); });
 it('shows a useful sign-in error and permits retry', async () => {
   mocks.login.mockRejectedValue({ code: 'auth/invalid-credential' });
   const user = userEvent.setup(); render(<App />);
@@ -39,4 +40,11 @@ it('does not offer a blank overwrite after a failed profile read', async () => {
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true }; mocks.load.mockRejectedValue({ code: 'unavailable' }); render(<App />);
   expect(await screen.findByRole('button', { name: 'Retry loading profile' })).toBeInTheDocument();
   expect(screen.getByLabelText('Display name')).toBeDisabled();
+});
+it('uses signed-in copy on a direct listing link', () => {
+  window.history.replaceState({}, '', '/?board=hp&listing=desk');
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  render(<App />);
+  expect(screen.getByText('View this listing and its requests in your community.')).toBeVisible();
+  expect(screen.queryByText('Sign in and verify your email to view community offers.')).not.toBeInTheDocument();
 });
