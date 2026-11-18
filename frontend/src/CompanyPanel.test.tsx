@@ -9,7 +9,7 @@ const membership = { company: {id:'hp',name:'HP',domain:'hp.com'}, status:'activ
 beforeEach(() => { vi.clearAllMocks(); mocks.ensure.mockResolvedValue(membership); mocks.save.mockResolvedValue(undefined); });
 afterEach(() => { window.history.replaceState({}, '', '/'); });
 it('automatically joins without an approval button and saves optional work details', async () => {
-  const user=userEvent.setup(); render(<CompanyPanel uid="ada" />);
+  const user=userEvent.setup(); render(<CompanyPanel uid="ada" page="profile" />);
   expect(await screen.findByRole('heading',{name:'Welcome to the HP community.'})).toBeInTheDocument();
   expect(mocks.ensure).toHaveBeenCalledWith('ada');
   await user.type(screen.getByLabelText('Work location (optional)'), 'Bengaluru');
@@ -30,7 +30,7 @@ it('does not claim membership when the network fails and offers retry', async ()
 });
 it('preserves existing details and displays save failures', async () => {
   mocks.ensure.mockResolvedValue({...membership,workLocation:'Pune',branch:'Campus A'});
-  mocks.save.mockRejectedValue({code:'permission-denied'}); const user=userEvent.setup(); render(<CompanyPanel uid="ada" />);
+  mocks.save.mockRejectedValue({code:'permission-denied'}); const user=userEvent.setup(); render(<CompanyPanel uid="ada" page="profile" />);
   expect(await screen.findByDisplayValue('Pune')).toBeInTheDocument();
   await user.click(screen.getByRole('button',{name:'Save work details'}));
   expect(await screen.findByRole('alert')).toHaveTextContent('Access denied');
@@ -46,4 +46,13 @@ it('does not open a listing from another company community', async () => {
   render(<CompanyPanel uid="ada" />);
   expect(await screen.findByRole('alert')).toHaveTextContent('outside your community');
   expect(screen.queryByLabelText('Work location (optional)')).not.toBeInTheDocument();
+});
+it('keeps requests and work details on their own pages', async () => {
+  const requests = render(<CompanyPanel uid="ada" page="requests" />);
+  expect(await screen.findByRole('region', { name: 'Requests inbox' })).toBeInTheDocument();
+  expect(screen.queryByLabelText('Work location (optional)')).not.toBeInTheDocument();
+  requests.unmount();
+  render(<CompanyPanel uid="ada" page="profile" />);
+  expect(await screen.findByLabelText('Work location (optional)')).toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: 'Requests inbox' })).not.toBeInTheDocument();
 });

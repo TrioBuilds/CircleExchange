@@ -40,6 +40,7 @@ code { overflow-wrap: anywhere; }
 .desktop-nav { display: flex; align-items: center; gap: clamp(12px, 2vw, 28px); }
 .desktop-nav a { padding: 10px 8px; text-decoration: none; color: var(--ink); font-weight: 800; }
 .desktop-nav a:hover { color: var(--purple); }
+.desktop-nav a[aria-current="page"] { color: var(--purple-dark); background: var(--soft); border-radius: 12px; }
 .desktop-nav .primary { margin: 0; }
 .mobile-nav { display: none; }
 main { flex: 1; min-width: 0; }
@@ -159,6 +160,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   .mobile-nav :is(a, button) { min-height: 48px; display: grid; place-items: center; gap: 2px; border: 0; border-radius: 11px; background: transparent; color: var(--ink); text-decoration: none; font-size: .78rem; font-weight: 800; }
   .mobile-nav svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .mobile-nav :is(a, button):hover, .mobile-nav :is(a, button):focus-visible { background: var(--soft); color: var(--purple-dark); }
+  .mobile-nav a[aria-current="page"] { background: var(--soft); color: var(--purple-dark); }
   .content { padding: 18px 16px 110px; }
   .session { justify-content: space-between; margin-bottom: 18px; }
   .hero { min-height: 220px; padding: 28px; border-radius: 24px; }

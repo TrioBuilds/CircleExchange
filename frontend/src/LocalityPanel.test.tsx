@@ -38,3 +38,11 @@ it('opens a linked parent feed only when the member can access it', async () => 
   expect(await screen.findByText('Baner listings')).toBeVisible();
   expect(screen.queryByLabelText('Community feed')).not.toBeInTheDocument();
 });
+it('shows locality settings on profile without the feed', async () => {
+  mocks.load.mockResolvedValue({ data: () => ({ areaId: 'local:pune:baner:alacrity' }) });
+  render(<LocalityPanel uid="ada" page="profile" />);
+  expect(await screen.findByRole('button', { name: 'Change locality' })).toBeInTheDocument();
+  expect(screen.queryByText('Alacrity Apartment listings')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Community feed')).not.toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: 'Requests inbox' })).not.toBeInTheDocument();
+});

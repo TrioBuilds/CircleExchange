@@ -61,7 +61,7 @@ it('opens a linked listing directly with its interest action', async () => {
   expect(await screen.findByText('Oak desk')).toBeVisible();
   expect(loadListing).toHaveBeenCalledWith(company, 'desk');
   expect(loadListings).not.toHaveBeenCalledWith(company, undefined);
-  expect(screen.getByRole('link', { name: /Back to your feed/ })).toHaveAttribute('href', '/');
+  expect(screen.getByRole('link', { name: /Back to your feed/ })).toHaveAttribute('href', '/feed');
   expect(await screen.findByRole('button', { name: 'I’m interested' })).toBeVisible();
 });
 
@@ -71,7 +71,7 @@ it('gives a safe unavailable state for a missing linked listing', async () => {
   vi.mocked(loadListing).mockResolvedValue(null);
   render(<Listings company={company} uid="ada" />);
   expect(await screen.findByRole('alert')).toHaveTextContent('no longer available');
-  expect(screen.getByRole('link', { name: /Back to your feed/ })).toHaveAttribute('href', '/');
+  expect(screen.getByRole('link', { name: /Back to your feed/ })).toHaveAttribute('href', '/feed');
 });
 
 it('restores each feed’s draft after switching away and back', async () => {

@@ -29,6 +29,7 @@ it('blocks profile access before email verification', () => {
   expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
 });
 it('loads and saves the signed-in user profile', async () => {
+  window.history.replaceState({}, '', '/profile');
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
   const user = userEvent.setup(); render(<App />);
   const field = await screen.findByDisplayValue('Ada'); await user.clear(field); await user.type(field, 'Ada Lovelace');
@@ -37,6 +38,7 @@ it('loads and saves the signed-in user profile', async () => {
   expect(await screen.findByRole('status')).toHaveTextContent('profile is saved');
 });
 it('does not offer a blank overwrite after a failed profile read', async () => {
+  window.history.replaceState({}, '', '/profile');
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true }; mocks.load.mockRejectedValue({ code: 'unavailable' }); render(<App />);
   expect(await screen.findByRole('button', { name: 'Retry loading profile' })).toBeInTheDocument();
   expect(screen.getByLabelText('Display name')).toBeDisabled();
@@ -47,6 +49,23 @@ it('uses signed-in copy on a direct listing link', () => {
   render(<App />);
   expect(screen.getByText('View this listing and its requests in your community.')).toBeVisible();
   expect(screen.queryByText('Sign in and verify your email to view community offers.')).not.toBeInTheDocument();
+});
+it('provides separate page links and only loads profile details on the profile page', async () => {
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  window.history.replaceState({}, '', '/requests');
+  const view = render(<App />);
+  const nav = within(screen.getByRole('navigation', { name: 'Primary' }));
+  expect(nav.getByRole('link', { name: 'Requests' })).toHaveAttribute('aria-current', 'page');
+  expect(nav.getByRole('link', { name: 'Feed' })).toHaveAttribute('href', '/feed');
+  expect(nav.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/profile');
+  expect(screen.getByRole('heading', { name: 'Your requests.' })).toBeInTheDocument();
+  expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
+  expect(mocks.load).not.toHaveBeenCalled();
+  view.unmount();
+  window.history.replaceState({}, '', '/profile');
+  render(<App />);
+  expect(await screen.findByDisplayValue('Ada')).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Your requests.' })).not.toBeInTheDocument();
 });
 it('opens the existing offer form from the primary navigation', async () => {
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };

@@ -109,7 +109,7 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
   }
 
   if (linkedId) return <section aria-label="Listing details" className="listing-page">
-    <a href="/">← Back to your feed</a>
+    <a href="/feed">← Back to your feed</a>
     {loading && <p role="status">Loading listing…</p>}
     {!loading && !linkedItem && <p role="alert">{error || 'This listing is no longer available.'}</p>}
     {linkedItem && card(linkedItem, true)}

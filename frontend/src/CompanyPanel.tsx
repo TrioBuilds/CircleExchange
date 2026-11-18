@@ -7,7 +7,7 @@ import Listings from './Listings';
 import { linkedListing } from './listingLink';
 import { friendlyError } from './errors';
 
-export default function CompanyPanel({ uid, email }: { uid: string; email?: string | null }) {
+export default function CompanyPanel({ uid, email, page = 'feed' }: { uid: string; email?: string | null; page?: 'feed' | 'requests' | 'profile' }) {
   const [membership, setMembership] = useState<CompanyMembership | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -17,7 +17,7 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
   const [busy, setBusy] = useState(false);
   const [workLocation, setWorkLocation] = useState('');
   const [branch, setBranch] = useState('');
-  const link = linkedListing();
+  const link = page === 'feed' ? linkedListing() : null;
   useEffect(() => {
     let active = true;
     setLoading(true); setError(''); setMembership(null);
@@ -40,7 +40,7 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
 
   return <section className="journey" aria-label="Your community">
     <p className="eyebrow">YOUR COMMUNITY</p>
-    {loading ? <p role="status">Connecting your company community…</p> : !membership && !error && isPersonalEmail(email) ? <LocalityPanel uid={uid} /> : !membership ? <>
+    {loading ? <p role="status">Connecting your company community…</p> : !membership && !error && isPersonalEmail(email) ? <LocalityPanel uid={uid} page={page} /> : !membership ? <>
       <h2>{error ? 'Connection interrupted' : 'Your circle is coming.'}</h2>
       {error ? <><p className="notice error" role="alert">{error}</p><button className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry community connection</button></> : <>
         <p>This email address is not eligible for a workplace community.</p>
@@ -54,9 +54,10 @@ export default function CompanyPanel({ uid, email }: { uid: string; email?: stri
       <h2>Welcome to the {membership.company.name} community.</h2>
       <span className="verified">✓ Company email verified</span>
       <p>You’ve joined automatically with your verified <strong>@{membership.company.domain}</strong> email. No approval request is needed.</p>
-      {link && link.board !== membership.company.id && <p role="alert">This listing is outside your community. <a href="/">Return to your feed</a></p>}
-      {(!link || link.board === membership.company.id) && <Listings inboxRevision={inboxRevision} company={membership.company} uid={uid} />}
-      {!link && <><Inbox onDecision={() => setInboxRevision(n => n + 1)} uid={uid} boards={[membership.company]} />
+      {page === 'feed' && link && link.board !== membership.company.id && <p role="alert">This listing is outside your community. <a href="/feed">Return to your feed</a></p>}
+      {page === 'feed' && (!link || link.board === membership.company.id) && <Listings inboxRevision={inboxRevision} company={membership.company} uid={uid} />}
+      {page === 'requests' && <Inbox onDecision={() => setInboxRevision(n => n + 1)} uid={uid} boards={[membership.company]} />}
+      {page === 'profile' && <>
       <form onSubmit={(event) => void save(event)}>
         <label htmlFor="work-location">Work location (optional)</label>
         <input id="work-location" placeholder="e.g. Bengaluru" maxLength={80} value={workLocation} onChange={(event) => setWorkLocation(event.target.value)} />
