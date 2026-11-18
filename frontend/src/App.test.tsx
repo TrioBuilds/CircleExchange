@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ user: null as null | { uid: string; email: string; emailVerified: boolean }, register: vi.fn(), login: vi.fn(), reset: vi.fn(), load: vi.fn(), save: vi.fn() }));
@@ -47,4 +47,23 @@ it('uses signed-in copy on a direct listing link', () => {
   render(<App />);
   expect(screen.getByText('View this listing and its requests in your community.')).toBeVisible();
   expect(screen.queryByText('Sign in and verify your email to view community offers.')).not.toBeInTheDocument();
+});
+it('opens the existing offer form from the primary navigation', async () => {
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  render(<App />);
+  const composer = document.createElement('details');
+  composer.className = 'compose';
+  composer.scrollIntoView = vi.fn();
+  document.body.append(composer);
+  await userEvent.setup().click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Post an offer' }));
+  expect(composer.open).toBe(true);
+  composer.remove();
+});
+it('takes a member without a feed to community setup when they choose Post', async () => {
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  render(<App />);
+  const community = await screen.findByRole('region', { name: 'Your community' });
+  community.scrollIntoView = vi.fn();
+  await userEvent.setup().click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Post an offer' }));
+  expect(community.scrollIntoView).toHaveBeenCalled();
 });

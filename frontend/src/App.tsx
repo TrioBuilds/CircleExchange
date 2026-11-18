@@ -8,6 +8,14 @@ import { loadProfile, saveProfile } from './services/profile';
 import { friendlyError } from './errors';
 import CompanyPanel from './CompanyPanel';
 import { linkedListing } from './listingLink';
+import { isPersonalEmail } from './companies';
+
+function openPost() {
+  const composer = document.querySelector<HTMLDetailsElement>('.compose');
+  if (composer) { composer.open = true; composer.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  else if (linkedListing()) window.location.href = '/#post-offer';
+  else document.querySelector('[aria-label="Your community"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function Notice({ error, message }: { error: string; message: string }) {
   return <>{error && <p className="notice error" role="alert">{error}</p>}{message && <p className="notice" role="status">{message}</p>}</>;
@@ -15,17 +23,15 @@ function Notice({ error, message }: { error: string; message: string }) {
 
 function Shell({ children, user }: { children: ReactNode; user?: User | null }) {
   const [error, setError] = useState('');
+  const signedIn = !!user?.emailVerified;
+  const feedHref = linkedListing() ? '/' : '#feed';
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Skip to content</a>
-    <aside className="sidebar">
-      <a className="brand" href="/" aria-label="CircleExchange home"><span className="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M6 11h19m0 0-5-5m5 5-5 5M26 21H7m0 0 5-5m-5 5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>Circle<span className="brand-light">Exchange</span></span></a>
-      <div className="workspace-label">YOUR WORKSPACE</div>
-      <div className="nav-active"><span className="nav-dot" aria-hidden="true" /> My account</div>
-      <p className="sidebar-caption">A little closer.<br />A lot more useful.</p>
-      <div className="sidebar-note"><span className="dot" /> First steps<br /><small>Verify your email. Find your circle.</small></div>
-    </aside>
+    <header className="site-header">
+      <a className="brand" href="/" aria-label="CircleExchange home"><span className="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M4 14c2-6 7-9 14-9h9m0 0-5-4m5 4-5 4M28 18c-2 6-7 9-14 9H5m0 0 5 4m-5-4 5-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>Circle<span className="brand-light">Exchange</span></span></a>
+      {signedIn && <nav className="desktop-nav" aria-label="Primary"><a href={feedHref}>Feed</a><a href={linkedListing() ? '/#requests' : '#requests'}>Requests</a><a href={linkedListing() ? '/#profile' : '#profile'}>Profile</a><button className="primary" onClick={openPost}>Post an offer</button></nav>}
+    </header>
     <main id="main-content">
-      <header><span>Workspace <span className="separator">/</span> My account</span><span className="phase">EARLY ACCESS</span></header>
       <div className="content">
         {user && <div className="session"><span>{user.email}</span><button className="text-button" onClick={() => { setError(''); void signOut(firebase!.auth).catch((err: unknown) => setError(friendlyError(err))); }}>Sign out</button></div>}
         {error && <p role="alert" className="notice error">{error}</p>}
@@ -33,6 +39,7 @@ function Shell({ children, user }: { children: ReactNode; user?: User | null }) 
       </div>
       <footer>CircleExchange <span>Good things, within your circle.</span></footer>
     </main>
+    {signedIn && <nav className="mobile-nav" aria-label="Mobile navigation"><a href={feedHref}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3zM9 20v-6h6v6" /></svg>Feed</a><a href={linkedListing() ? '/#requests' : '#requests'}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 3z" /></svg>Requests</a><button onClick={openPost}><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M12 8v8m-4-4h8" /></svg>Post</button><a href={linkedListing() ? '/#profile' : '#profile'}><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-5 3-8 8-8s8 3 8 8" /></svg>Profile</a></nav>}
   </div>;
 }
 
@@ -123,9 +130,9 @@ function Profile({ user }: { user: User }) {
     try { await saveProfile(user.uid, name); setName(name.trim()); setMessage('Your profile is saved.'); }
     catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
-  return <><p className="eyebrow">YOUR WORKSPACE</p><h1>{listingLink ? 'An offer in your circle.' : 'Make yourself at home.'}</h1><p className="intro">{listingLink ? 'View this listing and its requests in your community.' : 'Your circle, requests, and offers in one place.'}</p><div className="profile-stack">
+  return <>{listingLink ? <><p className="eyebrow">YOUR WORKSPACE</p><h1>An offer in your circle.</h1><p className="intro">View this listing and its requests in your community.</p></> : <section className="hero"><div><p className="eyebrow">YOUR CIRCLE, YOUR PEOPLE</p><h1>{isPersonalEmail(user.email) ? 'Good things, close to home.' : 'Good things, within your circle.'}</h1><p>Find useful offers from your community.</p><button className="hero-post" onClick={openPost}>Post an offer <span aria-hidden="true">→</span></button></div><span className="hero-art" aria-hidden="true" /></section>}<div className="profile-stack">
     <CompanyPanel key={user.uid + user.email} uid={user.uid} email={user.email} />
-    {!listingLink && <section className="card"><div className="card-heading"><span className="step">03</span><h2>Your profile</h2></div><span className="verified">✓ Email verified</span>
+    {!listingLink && <section className="card" id="profile"><div className="card-heading"><span className="step">03</span><h2>Your profile</h2></div><span className="verified">✓ Email verified</span>
       <form onSubmit={(event) => void submit(event)}><label htmlFor="name">Display name</label><input id="name" autoComplete="nickname" required minLength={2} maxLength={60} value={name} disabled={loading || loadFailed} onChange={(e) => setName(e.target.value)} /><small>Between 2 and 60 characters. Your profile is currently private.</small><Notice error={error} message={message} />{loadFailed ? <button type="button" className="secondary" onClick={() => setAttempt((n) => n + 1)}>Retry loading profile</button> : <button className="primary" disabled={busy || loading || name.trim().length < 2}>{loading ? 'Loading profile…' : busy ? 'Saving…' : 'Save profile'}</button>}</form>
     </section>}
   </div></>;

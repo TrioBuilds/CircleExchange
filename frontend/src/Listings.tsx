@@ -117,16 +117,17 @@ export default function Listings({ company, uid, drafts, inboxRevision = 0 }: { 
     {error && linkedItem && <p role="alert">{error}</p>}
   </section>;
 
-  return <section aria-label="Community listings">
+  return <section aria-label="Community listings" id="feed">
     <div className="feed-heading"><div><p className="eyebrow">EXPLORE YOUR CIRCLE</p><h2>{company.name} listings</h2></div><button className="secondary" disabled={busy || loading} onClick={refresh}>Refresh feed</button></div>
-    <label className="feed-filter">Filter by category<select value={category} onChange={event => setCategory(event.target.value as typeof category)}>
-      <option value="">All categories</option>{categories.map(item => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
-    </select></label>
+    <fieldset className="feed-filter"><legend>Filter by category</legend><div className="filter-options">
+      <button type="button" aria-pressed={!category} onClick={() => setCategory('')}>All</button>
+      {categories.map(item => <button type="button" key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item[0].toUpperCase() + item.slice(1)}</button>)}
+    </div></fieldset>
     {loading && <p role="status">Loading listings…</p>}
     {page?.items.length === 0 && <p className="feed-empty">{category ? `No ${category} listings yet. Try another category.` : 'No listings yet. Be the first to offer something useful.'}</p>}
     <div className="listing-grid">{page?.items.map(item => card(item))}</div>
     {page?.next && <button disabled={busy} onClick={() => void more()}>Load more listings</button>}
-    <details className="compose" key={company.id}>
+    <details className="compose" id="post-offer" key={company.id} open={window.location.hash === '#post-offer' ? true : undefined}>
       <summary><span>Offer something to your community</span><small>Free items, goods, and services</small></summary>
       <p>Include a shared pickup point instead of a private address.</p>
       <form key={formVersion} onSubmit={submit} onChange={event => {

@@ -49,7 +49,7 @@ export default function Inbox({ boards, uid, onDecision }: { boards: Board[]; ui
     } catch { setError('Could not update that request. Refresh to check its current status.'); }
     finally { setBusy(false); }
   }
-  return <section aria-label="Requests inbox"><h2>Requests inbox</h2>
+  return <section aria-label="Requests inbox" id="requests"><h2>Requests inbox</h2>
     {(['Received','Sent'] as const).map(tab => <button key={tab} disabled={busy}
       aria-pressed={open && folder === tab} onClick={()=>start(tab)}>{tab}</button>)}
     {open && <>

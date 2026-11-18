@@ -46,7 +46,7 @@ it('filters the feed by category before loading listings', async () => {
   const user = userEvent.setup();
   render(<Listings company={company} uid="ada" />);
   await screen.findByText(/No listings yet/);
-  await user.selectOptions(screen.getByLabelText('Filter by category'), 'services');
+  await user.click(screen.getByRole('button', { name: 'Services' }));
   expect(loadListings).toHaveBeenLastCalledWith(company, 'services');
   expect(await screen.findByText('No services listings yet. Try another category.')).toBeVisible();
 });
