@@ -38,7 +38,7 @@ export default function Interest({board,item,uid,refresh,autoLoad = false}:{boar
         await requestInterest(board,item.id,uid,name); setStatus('pending');
       }); }}>
         <label>Name to share with the seller<input value={name} onChange={e=>setName(e.target.value)} required maxLength={60}/></label>
-        <button disabled={busy || !name.trim()}>I’m interested</button>
+        <button className="primary" disabled={busy || !name.trim()}>I’m interested</button>
       </form>)}
     {loaded && (owner ? !!requests[0] && item.status !== 'available' : status === 'accepted') && <>
       <button onClick={() => setConversationOpen(open => !open)}>{conversationOpen ? 'Close conversation' : 'Open conversation'}</button>
