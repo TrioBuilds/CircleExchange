@@ -1,7 +1,9 @@
 import { afterEach, expect, it } from 'vitest';
 import { linkedListing, listingUrl } from './listingLink';
 
-afterEach(() => { window.history.replaceState({}, '', '/'); });
+afterEach(() => {
+  window.history.replaceState({}, '', '/');
+});
 
 it('builds a shareable URL and rejects malformed listing IDs', () => {
   const url = listingUrl('local:pune:baner', 'abc123');

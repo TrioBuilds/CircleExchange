@@ -7,5 +7,9 @@ export default defineConfig({
   plugins: [react()],
   server: { host: '127.0.0.1', port: 5173 },
   build: { outDir: 'dist', emptyOutDir: true },
-  test: { environment: 'jsdom', setupFiles: ['./src/test/setup.ts'], include: ['src/**/*.test.{ts,tsx}'] },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
 });

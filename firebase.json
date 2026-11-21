@@ -2,17 +2,11 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json",
-    "predeploy": [
-      "node scripts/check-deployment-source.mjs"
-    ]
+    "predeploy": ["node scripts/check-deployment-source.mjs"]
   },
   "hosting": {
     "public": "frontend/dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
@@ -56,9 +50,7 @@
         ]
       }
     ],
-    "predeploy": [
-      "node scripts/build-production.mjs"
-    ]
+    "predeploy": ["node scripts/build-production.mjs"]
   },
   "emulators": {
     "auth": {

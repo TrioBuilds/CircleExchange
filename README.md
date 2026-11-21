@@ -33,12 +33,30 @@ Verification/reset links are printed by the Auth emulator; it does not send real
 
 ```sh
 pnpm lint
+pnpm format:check
 pnpm test
 pnpm build
 pnpm test:rules
 ```
 
 Stop running emulators before `test:rules`, which starts its own isolated instance.
+
+Run `pnpm format` to apply the project's formatting rules.
+
+## Source structure
+
+```text
+frontend/src/
+  App.tsx       Authentication state and screen selection
+  app/          Shared layout, navigation, and workspace composition
+  pages/        Sign-in, email verification, and profile screens
+  components/   Community panels, listing cards/forms, inbox, and conversations
+  services/     Firebase configuration and data operations
+  test/         Shared test setup
+```
+
+Tests live beside the code they cover. Community definitions, configuration parsing,
+listing links, and error messages remain in the source root.
 
 ## Documentation
 

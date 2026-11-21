@@ -4,13 +4,20 @@ export const areas = [
   { id: 'local:pune', name: 'Pune' },
 ];
 export function hierarchy(id: string) {
-  const index = areas.findIndex(area => area.id === id);
+  const index = areas.findIndex((area) => area.id === id);
   return index < 0 ? [] : areas.slice(index);
 }
 
 // Baner neighborhood reference point (Wikidata Q4801087), not a boundary.
 export function suggestArea(lat: number, lon: number, accuracy: number) {
-  if (![lat, lon, accuracy].every(Number.isFinite) || Math.abs(lat) > 90 || Math.abs(lon) > 180 || accuracy < 0 || accuracy > 500) return null;
+  if (
+    ![lat, lon, accuracy].every(Number.isFinite) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lon) > 180 ||
+    accuracy < 0 ||
+    accuracy > 500
+  )
+    return null;
   // Approximate center from the user-supplied public Alacrity Apartment map.
   // https://share.google/aIMwxd7MZYfDGOpmu — suggest proximity, never residency.
   const apartmentDistance = Math.hypot((lat - 18.5565184) * 111320, (lon - 73.7574912) * 105500);
