@@ -1,6 +1,17 @@
 import {
-  collection, doc, getDocFromServer, getDocsFromServer, limit, orderBy, query, serverTimestamp, where,
-  setDoc, startAfter, updateDoc, type QueryDocumentSnapshot,
+  collection,
+  doc,
+  getDocFromServer,
+  getDocsFromServer,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+  setDoc,
+  startAfter,
+  updateDoc,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
 import type { Company } from '../companies';
@@ -9,11 +20,15 @@ export const categories = ['goods', 'services'] as const;
 export type ListingDraft = {
   title: string;
   description: string;
-  category: typeof categories[number];
+  category: (typeof categories)[number];
   pricePaise: number;
   pickup: string;
 };
-export type Listing = ListingDraft & { id: string; ownerId: string; status: 'available' | 'reserved' | 'exchanged' };
+export type Listing = ListingDraft & {
+  id: string;
+  ownerId: string;
+  status: 'available' | 'reserved' | 'exchanged';
+};
 export type Page = { items: Listing[]; next: QueryDocumentSnapshot | null };
 
 function listings(company: Pick<Company, 'id' | 'name'>) {
@@ -21,25 +36,46 @@ function listings(company: Pick<Company, 'id' | 'name'>) {
   return collection(firebase.db, 'communities', company.id, 'listings');
 }
 
-export async function loadListings(company: Pick<Company, 'id' | 'name'>, category?: ListingDraft['category'], after?: QueryDocumentSnapshot): Promise<Page> {
+export async function loadListings(
+  company: Pick<Company, 'id' | 'name'>,
+  category?: ListingDraft['category'],
+  after?: QueryDocumentSnapshot,
+): Promise<Page> {
   const pageSize = 20;
-  const result = await getDocsFromServer(query(listings(company), ...(category ? [where('category', '==', category)] : []), orderBy('createdAt', 'desc'),
-    ...(after ? [startAfter(after)] : []), limit(pageSize + 1)));
+  const result = await getDocsFromServer(
+    query(
+      listings(company),
+      ...(category ? [where('category', '==', category)] : []),
+      orderBy('createdAt', 'desc'),
+      ...(after ? [startAfter(after)] : []),
+      limit(pageSize + 1),
+    ),
+  );
   const page = result.docs.slice(0, pageSize);
   return {
-    items: page.map(snapshot => ({ ...snapshot.data(), id: snapshot.id }) as Listing),
+    items: page.map((snapshot) => ({ ...snapshot.data(), id: snapshot.id }) as Listing),
     next: result.size > pageSize ? page[page.length - 1] : null,
   };
 }
 
-export async function loadListing(company: Pick<Company, 'id' | 'name'>, id: string): Promise<Listing | null> {
+export async function loadListing(
+  company: Pick<Company, 'id' | 'name'>,
+  id: string,
+): Promise<Listing | null> {
   const snapshot = await getDocFromServer(doc(listings(company), id));
-  return snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } as Listing : null;
+  return snapshot.exists() ? ({ ...snapshot.data(), id: snapshot.id } as Listing) : null;
 }
 
-export async function postListing(company: Pick<Company, 'id' | 'name'>, uid: string, draft: ListingDraft) {
+export async function postListing(
+  company: Pick<Company, 'id' | 'name'>,
+  uid: string,
+  draft: ListingDraft,
+) {
   await setDoc(doc(listings(company)), {
-    ...draft, ownerId: uid, status: 'available', createdAt: serverTimestamp(),
+    ...draft,
+    ownerId: uid,
+    status: 'available',
+    createdAt: serverTimestamp(),
   });
 }
 
