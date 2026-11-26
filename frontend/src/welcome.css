@@ -1,0 +1,263 @@
+.welcome-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  padding: 36px 0 64px;
+}
+.welcome-copy h1 {
+  max-width: 10ch;
+  font-size: clamp(2.8rem, 5.3vw, 4.6rem);
+  line-height: 1.04;
+  margin: 20px 0 24px;
+}
+.welcome-copy h1 span {
+  color: var(--purple);
+}
+.welcome-copy .intro {
+  max-width: 38ch;
+  font-size: 1.12rem;
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.welcome-actions a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  margin: 0;
+  padding: 13px 22px;
+  min-height: 48px;
+}
+.welcome-caption {
+  max-width: 34ch;
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.exchange-example {
+  position: relative;
+  padding: clamp(22px, 3vw, 34px);
+  border-radius: 28px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px #2d14590d;
+}
+.example-heading {
+  margin-bottom: 24px;
+}
+.example-label {
+  margin: 0 0 8px;
+}
+.example-heading h2 {
+  font-size: 1.7rem;
+}
+.example-need,
+.example-help {
+  padding: 16px 20px;
+  border-radius: 18px;
+}
+.example-need {
+  background: #fff;
+  margin-right: 32px;
+  border-bottom-left-radius: 4px;
+}
+.example-help {
+  background: var(--purple);
+  color: #fff;
+  margin-left: 32px;
+  border-bottom-right-radius: 4px;
+}
+.example-need strong,
+.example-help strong {
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+}
+.example-need p,
+.example-help p {
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+.example-arrow {
+  display: block;
+  text-align: center;
+  font-size: 1.6rem;
+  color: var(--purple-dark);
+  line-height: 1;
+  padding: 8px 0;
+}
+.example-receipt {
+  margin: 24px 0 0;
+  padding: 16px 20px 0;
+  background: #fff;
+  border-radius: 16px;
+}
+.example-receipt > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 0;
+}
+.example-receipt dt {
+  font-size: 0.9rem;
+}
+.example-receipt dd {
+  margin: 0;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.example-receipt .example-net {
+  background: var(--lime);
+  margin: 14px -20px 0;
+  padding: 18px 20px;
+  border-radius: 0 0 16px 16px;
+  align-items: center;
+}
+.example-net dd {
+  font-family: Nunito, sans-serif;
+  font-size: 1.55rem;
+}
+.example-terms {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 18px 0 12px;
+}
+.example-replay {
+  border: 0;
+  background: transparent;
+  color: var(--purple-dark);
+  padding: 10px 0;
+  min-height: 44px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.example-replay span {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 1.1rem;
+}
+.welcome-account {
+  border-top: 1px solid var(--line);
+  padding-top: 48px;
+}
+#welcome-account {
+  scroll-margin-top: 24px;
+}
+.welcome-guide {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.welcome-guide ul {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0;
+  display: grid;
+  gap: 24px;
+}
+.welcome-guide li {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.welcome-guide li strong {
+  color: var(--purple-dark);
+}
+.welcome-guide li span {
+  color: var(--muted);
+}
+.welcome-guide .fine-print {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+@keyframes exchange-arrive {
+  from {
+    opacity: 0.35;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes exchange-point {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .example-arrow {
+    animation: exchange-point 0.8s ease-in-out 3;
+  }
+  .example-help {
+    animation: exchange-arrive 0.65s ease-out both;
+    animation-delay: 0.25s;
+  }
+  .example-receipt {
+    animation: exchange-arrive 0.65s ease-out both;
+    animation-delay: 0.9s;
+  }
+}
+@media (max-width: 900px) {
+  .welcome-hero {
+    gap: 28px;
+  }
+  .example-need {
+    margin-right: 12px;
+  }
+  .example-help {
+    margin-left: 12px;
+  }
+}
+@media (max-width: 760px) {
+  .welcome-hero {
+    grid-template-columns: 1fr;
+    padding: 16px 0 40px;
+    gap: 32px;
+  }
+  .welcome-copy h1 {
+    max-width: 13ch;
+    font-size: clamp(2.7rem, 9vw, 4rem);
+  }
+  .welcome-copy .intro {
+    max-width: 45ch;
+  }
+  .welcome-caption {
+    margin-top: 16px;
+  }
+  .exchange-example {
+    max-width: 540px;
+    width: 100%;
+  }
+  .welcome-account {
+    padding-top: 32px;
+  }
+  .welcome-guide {
+    padding-inline: 4px;
+  }
+}
+@media (max-width: 380px) {
+  .exchange-example {
+    padding: 20px 16px;
+  }
+  .example-receipt {
+    padding-inline: 14px;
+  }
+  .example-receipt .example-net {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+  .example-net dd {
+    font-size: 1.3rem;
+  }
+}
