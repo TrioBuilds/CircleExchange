@@ -60,8 +60,19 @@ it('lets a neighbor offer help and prevents new replies after expiry', async () 
   const view = render(<Interest board="hp" item={ask} uid="neighbor" refresh={vi.fn()} />);
   await user.click(screen.getByRole('button', { name: 'View my reply' }));
   await user.type(await screen.findByLabelText('Name to share with the person asking'), 'Sam');
+  expect(screen.getByRole('button', { name: 'I can help' })).toBeDisabled();
+  await user.type(
+    screen.getByLabelText('How can you help?'),
+    'I can book two tickets after 6pm. My fee is ₹100.',
+  );
   await user.click(screen.getByRole('button', { name: 'I can help' }));
-  expect(requestInterest).toHaveBeenCalledWith('hp', 'book', 'neighbor', 'Sam');
+  expect(requestInterest).toHaveBeenCalledWith(
+    'hp',
+    'book',
+    'neighbor',
+    'Sam',
+    'I can book two tickets after 6pm. My fee is ₹100.',
+  );
   view.unmount();
   render(
     <Interest
@@ -73,4 +84,42 @@ it('lets a neighbor offer help and prevents new replies after expiry', async () 
   );
   await user.click(screen.getByRole('button', { name: 'View my reply' }));
   expect(screen.queryByRole('button', { name: 'I can help' })).not.toBeInTheDocument();
+});
+it('shows help notes before accepting and supports an earlier reply without a note', async () => {
+  vi.mocked(requestNames).mockResolvedValue([
+    { uid: 'helper', name: 'Sam', note: 'I can help tonight for ₹100.' },
+    { uid: 'older', name: 'Ada' },
+  ]);
+  const user = userEvent.setup();
+  render(
+    <Interest
+      board="hp"
+      item={{ ...item, askDeadline: Timestamp.fromMillis(Date.now() + 3600000) }}
+      uid="seller"
+      refresh={vi.fn()}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'View helpers' }));
+  expect(await screen.findByText('I can help tonight for ₹100.')).toBeVisible();
+  expect(screen.getByText('This earlier reply has no note.')).toBeVisible();
+  expect(screen.getAllByRole('button', { name: 'Accept' })).toHaveLength(2);
+});
+it('retains a helper note after a failed reply', async () => {
+  vi.mocked(myInterest).mockResolvedValue(undefined);
+  vi.mocked(requestInterest).mockRejectedValueOnce(new Error('offline'));
+  const user = userEvent.setup();
+  render(
+    <Interest
+      board="hp"
+      item={{ ...item, askDeadline: Timestamp.fromMillis(Date.now() + 3600000) }}
+      uid="neighbor"
+      refresh={vi.fn()}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'View my reply' }));
+  await user.type(await screen.findByLabelText('Name to share with the person asking'), 'Sam');
+  await user.type(screen.getByLabelText('How can you help?'), 'I can help tonight.');
+  await user.click(screen.getByRole('button', { name: 'I can help' }));
+  expect(await screen.findByRole('alert')).toBeVisible();
+  expect(screen.getByLabelText('How can you help?')).toHaveValue('I can help tonight.');
 });

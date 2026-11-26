@@ -115,6 +115,9 @@ export default function Inbox({
                 {row.board.name}
                 {folder === 'Received' && ' · ' + row.name}
               </p>
+              {(row.askDeadline !== undefined || row.note) && (
+                <p className="reply-note">{row.note || 'This earlier reply has no note.'}</p>
+              )}
               <strong>
                 {row.status === 'pending' &&
                 (!row.available || (row.askDeadline !== undefined && row.askDeadline <= Date.now()))

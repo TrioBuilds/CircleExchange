@@ -918,6 +918,13 @@ textarea:focus {
   border-color: var(--purple);
   background: var(--soft);
 }
+.reply-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px 14px;
+  background: var(--soft);
+  border-radius: 12px;
+}
 .ask-card:not([open]) > summary::after {
   content: 'View ask →';
 }

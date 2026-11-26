@@ -21,6 +21,7 @@ export type Entry = {
   title: string;
   buyer: string;
   name: string;
+  note?: string;
   status: InterestStatus;
   available: boolean;
   createdAt: number;
@@ -57,6 +58,7 @@ async function* boardPages(
         title: String(data.title),
         buyer,
         name: String(request.name),
+        note: typeof request.note === 'string' ? request.note : undefined,
         status: request.status as InterestStatus,
         available: data.status === 'available',
         askDeadline: data.askDeadline?.toMillis(),

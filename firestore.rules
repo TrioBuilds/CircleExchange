@@ -127,6 +127,11 @@ service cloud.firestore {
         let data = get(offerPath()).data;
         return !data.keys().hasAny(['askDeadline']) || data.askDeadline > request.time;
       }
+      function validReplyNote() {
+        let data = request.resource.data;
+        return data.keys().hasAny(['note']) ? listingText(data.note, 500)
+          : !get(offerPath()).data.keys().hasAny(['askDeadline']);
+      }
       function reservation() {
         return /databases/$(database)/documents/communities/$(companyId)/listings/$(listingId)/private/reservation;
       }
@@ -145,7 +150,8 @@ service cloud.firestore {
         allow create: if activeMember(companyId) && owner(buyer) && !seller()
           && get(offerPath()).data.status == 'available'
           && acceptingReplies()
-          && request.resource.data.keys().hasOnly(['name','createdAt','status'])
+          && request.resource.data.keys().hasOnly(['name','createdAt','status','note'])
+          && validReplyNote()
           && listingText(request.resource.data.name,60) && request.resource.data.createdAt == request.time
           && request.resource.data.status == 'pending';
         allow update: if seller() && resource.data.status == 'pending' && get(offerPath()).data.status == 'available'

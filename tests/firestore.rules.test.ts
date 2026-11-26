@@ -360,7 +360,12 @@ describe('asks and help replies', () => {
     createdAt: serverTimestamp(),
     askDeadline: Timestamp.fromMillis(Date.now() + 3600000),
   });
-  const reply = () => ({ name: 'Neighbor', status: 'pending', createdAt: serverTimestamp() });
+  const reply = () => ({
+    name: 'Neighbor',
+    note: 'I can help tonight for ₹100.',
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
   async function members() {
     await env.withSecurityRulesDisabled(async (context) => {
       for (const uid of ['asking', 'helper', 'other'])
@@ -416,7 +421,9 @@ describe('asks and help replies', () => {
       winner,
       'Sent',
     ).next();
-    expect(sent.value).toMatchObject([{ status: 'accepted', askDeadline: expect.any(Number) }]);
+    expect(sent.value).toMatchObject([
+      { status: 'accepted', askDeadline: expect.any(Number), note: 'I can help tonight for ₹100.' },
+    ]);
     const received = await inboxPages(
       account('asking'),
       [{ id: 'hp', name: 'HP' }],
@@ -453,6 +460,41 @@ describe('asks and help replies', () => {
     await assertFails(accept('helper'));
     await assertFails(getDocs(query(collection(account('helper'), path + '/messages'), limit(30))));
     await assertSucceeds(updateDoc(doc(account('asking'), path), { status: 'exchanged' }));
+  });
+  it('requires a bounded helper note and keeps it private and immutable', async () => {
+    await members();
+    await setDoc(doc(account('asking'), path), ask());
+    const ref = doc(account('helper'), path + '/requests/helper');
+    const legacy = { name: 'Helper', status: 'pending', createdAt: serverTimestamp() };
+    await assertFails(setDoc(ref, legacy));
+    for (const note of ['', ' ', 'x'.repeat(501), 123, null]) {
+      await assertFails(setDoc(ref, { ...legacy, note }));
+    }
+    await assertSucceeds(setDoc(ref, reply()));
+    expect((await getDoc(ref)).data()?.note).toBe(reply().note);
+    expect((await getDoc(doc(account('asking'), path + '/requests/helper'))).data()?.note).toBe(
+      reply().note,
+    );
+    await assertFails(getDoc(doc(account('other'), path + '/requests/helper')));
+    await assertFails(updateDoc(ref, { note: 'Changed' }));
+    await assertFails(
+      updateDoc(doc(account('asking'), path + '/requests/helper'), { note: 'Changed' }),
+    );
+    await assertSucceeds(accept('helper'));
+    expect((await getDoc(ref)).data()?.note).toBe(reply().note);
+  });
+  it('still lets the author accept a legacy ask reply without a note', async () => {
+    await members();
+    await setDoc(doc(account('asking'), path), ask());
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), path + '/requests/helper'), {
+        name: 'Helper',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
+    });
+    await assertSucceeds(getDoc(doc(account('asking'), path + '/requests/helper')));
+    await assertSucceeds(accept('helper'));
   });
 });
 
