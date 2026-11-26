@@ -75,6 +75,98 @@ it('filters the feed by category before loading listings', async () => {
   expect(await screen.findByText('No services listings yet. Try another category.')).toBeVisible();
 });
 
+it('publishes a discount with booking terms and shows net savings before interest', async () => {
+  vi.mocked(loadListings).mockResolvedValue({ items: [], next: null });
+  vi.mocked(postListing).mockResolvedValue(undefined);
+  const company = COMPANIES[0];
+  const user = userEvent.setup();
+  render(<Listings company={company} uid="ada" />);
+  await user.click(screen.getByText('Offer something to your community'));
+  await user.type(screen.getByLabelText('Title'), 'Movie tickets');
+  await user.type(
+    screen.getByLabelText('Description'),
+    'Two eligible tickets, subject to availability',
+  );
+  await user.selectOptions(screen.getByLabelText('Offer type'), 'discount');
+  expect(screen.queryByLabelText('Pickup location')).not.toBeInTheDocument();
+  await user.type(screen.getByLabelText('Helper fee (INR)'), '200');
+  await user.type(screen.getByLabelText('Maximum discount (INR)'), '500');
+  await user.selectOptions(screen.getByLabelText('Who books?'), 'helper');
+  await user.type(
+    screen.getByLabelText('When is the helper fee paid?'),
+    'After tickets are issued',
+  );
+  await user.type(screen.getByLabelText('What happens if booking fails?'), 'No fee is due');
+  await user.type(
+    screen.getByLabelText('Cancellation and refund terms'),
+    'Fee refunded if helper cancels',
+  );
+  const discount = {
+    maxDiscountPaise: 50000,
+    bookedBy: 'helper' as const,
+    paymentTerms: 'After tickets are issued',
+    failureTerms: 'No fee is due',
+    cancellationTerms: 'Fee refunded if helper cancels',
+  };
+  const item = {
+    id: 'tickets',
+    ownerId: 'ada',
+    title: 'Movie tickets',
+    description: 'Two eligible tickets, subject to availability',
+    category: 'services' as const,
+    pickup: '',
+    pricePaise: 20000,
+    discount,
+    status: 'available' as const,
+  };
+  vi.mocked(loadListings).mockResolvedValue({ items: [item], next: null });
+  await user.click(screen.getByRole('button', { name: 'Publish listing' }));
+  expect(postListing).toHaveBeenCalledWith(company, 'ada', {
+    title: item.title,
+    description: item.description,
+    category: 'services',
+    pickup: '',
+    pricePaise: 20000,
+    discount,
+  });
+  expect(await screen.findByText('Save up to ₹300.00 after the fee')).toBeVisible();
+  expect(screen.getByText('Helper fee ₹200.00')).toBeVisible();
+  await user.click(screen.getByText('Movie tickets'));
+  expect(screen.getByRole('region', { name: 'Booking terms' })).toHaveTextContent('No fee is due');
+  expect(screen.getByRole('region', { name: 'Booking terms' })).toHaveTextContent(
+    'Fee refunded if helper cancels',
+  );
+});
+
+it('rejects a helper fee that eliminates the discount and retains the draft', async () => {
+  vi.mocked(loadListings).mockResolvedValue({ items: [], next: null });
+  const drafts = new Map([
+    [
+      'hp',
+      {
+        offer: 'discount',
+        title: 'Tickets',
+        description: 'Weekend tickets',
+        price: '500',
+        'max-discount': '500',
+        'booked-by': 'buyer',
+        'payment-terms': 'After booking',
+        'failure-terms': 'No fee',
+        'cancellation-terms': 'Discuss before booking',
+      },
+    ],
+  ]);
+  const user = userEvent.setup();
+  render(<Listings company={COMPANIES[0]} uid="ada" drafts={drafts} />);
+  await user.click(screen.getByText('Offer something to your community'));
+  await user.click(screen.getByRole('button', { name: 'Publish listing' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'discount greater than the helper fee',
+  );
+  expect(postListing).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Maximum discount (INR)')).toHaveValue(500);
+});
+
 it('opens a linked listing directly with its interest action', async () => {
   const company = COMPANIES[0];
   const item = {

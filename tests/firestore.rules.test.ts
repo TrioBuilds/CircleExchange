@@ -299,6 +299,49 @@ describe('company listings', () => {
     await assertSucceeds(setDoc(doc(db, path, 'one'), { ...listing(), pricePaise: 5999 }));
     await assertFails(getDocs(collection(db, path)));
   });
+  it('validates discount fees, booking terms, and immutable deal details', async () => {
+    await enroll('ada');
+    await enroll('bob');
+    const db = employee('ada');
+    const discount = {
+      maxDiscountPaise: 50000,
+      bookedBy: 'helper',
+      paymentTerms: 'After tickets are issued',
+      failureTerms: 'No fee',
+      cancellationTerms: 'Fee refunded if helper cancels',
+    };
+    const offer = { ...listing(), category: 'services', pickup: '', pricePaise: 20000, discount };
+    const ref = doc(db, path, 'discount');
+    await assertSucceeds(setDoc(ref, offer));
+    await assertSucceeds(getDoc(doc(employee('bob'), path, 'discount')));
+    await assertFails(updateDoc(ref, { pricePaise: 30000 }));
+    await assertFails(updateDoc(ref, { discount: { ...discount, failureTerms: 'Fee retained' } }));
+    await assertSucceeds(updateDoc(ref, { status: 'exchanged' }));
+    await assertSucceeds(
+      setDoc(doc(db, path, 'no-fee'), {
+        ...offer,
+        pricePaise: 0,
+        discount: { ...discount, bookedBy: 'buyer' },
+      }),
+    );
+    for (const invalid of [
+      { pricePaise: -1 },
+      { pricePaise: 1.5 },
+      { pricePaise: 50000 },
+      { category: 'goods' },
+      { discount: null },
+      { discount: { ...discount, maxDiscountPaise: 100000001 } },
+      { discount: { ...discount, maxDiscountPaise: 50000.5 } },
+      { discount: { ...discount, bookedBy: 'anyone' } },
+      { discount: { ...discount, failureTerms: ' ' } },
+      { discount: { ...discount, paymentTerms: 'x'.repeat(501) } },
+      { discount: { ...discount, cancellationTerms: '' } },
+      { discount: { ...discount, guaranteed: true } },
+      { discount: { maxDiscountPaise: 50000 } },
+    ]) {
+      await assertFails(setDoc(doc(db, path, 'invalid'), { ...offer, ...invalid }));
+    }
+  });
 });
 
 describe('Pune locality communities', () => {

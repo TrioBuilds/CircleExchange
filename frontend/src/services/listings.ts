@@ -17,12 +17,20 @@ import { firebase } from './firebase';
 import type { Company } from '../companies';
 
 export const categories = ['goods', 'services'] as const;
+export type DiscountDetails = {
+  maxDiscountPaise: number;
+  bookedBy: 'helper' | 'buyer';
+  paymentTerms: string;
+  failureTerms: string;
+  cancellationTerms: string;
+};
 export type ListingDraft = {
   title: string;
   description: string;
   category: (typeof categories)[number];
   pricePaise: number;
   pickup: string;
+  discount?: DiscountDetails;
 };
 export type Listing = ListingDraft & {
   id: string;
