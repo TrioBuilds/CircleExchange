@@ -2,21 +2,18 @@ import { useState, type FormEvent } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { categories, postListing } from '../services/listings';
 import type { Company } from '../companies';
-import type { FormDraft } from './ListingForm';
+import { useDraft } from '../hooks/useDraft';
 
 export default function AskForm({
   company,
   uid,
-  drafts,
   onPublished,
 }: {
   company: Pick<Company, 'id' | 'name'>;
   uid: string;
-  drafts?: Map<string, FormDraft>;
   onPublished: () => void;
 }) {
-  const key = company.id + ':ask';
-  const draft = drafts?.get(key);
+  const { draft, save, clear, message: draftMessage } = useDraft(uid, company.id, 'ask');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -52,8 +49,7 @@ export default function AskForm({
         pickup: '',
         askDeadline: Timestamp.fromMillis(deadline),
       });
-      drafts?.delete(key);
-      setVersion((value) => value + 1);
+      if (clear(true)) setVersion((value) => value + 1);
       setMessage('Your ask is posted. Follow replies in Requests or open your ask in the feed.');
       onPublished();
     } catch {
@@ -71,19 +67,13 @@ export default function AskForm({
     >
       <summary>
         <span>Ask my circle</span>
-        <small>Tell your circle what you need</small>
+        <small>{draft ? 'Continue your saved ask' : 'Tell your circle what you need'}</small>
       </summary>
       <p>
         Post a need in {company.name}. Members can offer to help before your deadline. Accept one
         helper to start a private conversation.
       </p>
-      <form
-        key={version}
-        onSubmit={submit}
-        onChange={(event) =>
-          drafts?.set(key, Object.fromEntries(new FormData(event.currentTarget)) as FormDraft)
-        }
-      >
+      <form key={version} onSubmit={submit} onChange={(event) => save(event.currentTarget)}>
         <label>
           What do you need?
           <input
@@ -131,6 +121,7 @@ export default function AskForm({
             {message}
           </p>
         )}
+        <small aria-live="polite">{draftMessage}</small>
         <button className="primary" disabled={busy}>
           {busy ? 'Posting ask…' : 'Post my ask'}
         </button>
@@ -139,7 +130,7 @@ export default function AskForm({
           className="secondary"
           disabled={busy}
           onClick={() => {
-            drafts?.delete(key);
+            clear();
             setVersion((value) => value + 1);
             setError('');
             setMessage('');

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ListingCard from './ListingCard';
-import ListingForm, { type FormDraft } from './ListingForm';
+import ListingForm from './ListingForm';
 import AskForm from './AskForm';
 import { openAsk } from '../app/navigation';
 import type { Company } from '../companies';
@@ -17,13 +17,11 @@ import {
 export default function Listings({
   company,
   uid,
-  drafts,
   inboxRevision = 0,
 }: {
   company: Pick<Company, 'id' | 'name'>;
   uid: string;
   inboxRevision?: number;
-  drafts?: Map<string, FormDraft>;
 }) {
   const link = linkedListing();
   const linkedId = link?.board === company.id ? link.listing : '';
@@ -192,7 +190,6 @@ export default function Listings({
         key={company.id}
         company={company}
         uid={uid}
-        drafts={drafts}
         busy={busy}
         setBusy={setBusy}
         setError={setError}
@@ -202,13 +199,7 @@ export default function Listings({
           refresh();
         }}
       />
-      <AskForm
-        key={'ask:' + company.id}
-        company={company}
-        uid={uid}
-        drafts={drafts}
-        onPublished={refresh}
-      />
+      <AskForm key={'ask:' + company.id} company={company} uid={uid} onPublished={refresh} />
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
     </section>

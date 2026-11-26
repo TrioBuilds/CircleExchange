@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { doc, getDocFromServer, setDoc } from 'firebase/firestore';
 import { firebase } from '../services/firebase';
 import { hierarchy, matchLocation } from '../localities';
 import Inbox from './Inbox';
 import Listings from './Listings';
-import type { FormDraft } from './ListingForm';
 import { linkedListing } from '../listingLink';
 
 export default function LocalityPanel({
@@ -14,7 +13,6 @@ export default function LocalityPanel({
   uid: string;
   page?: 'feed' | 'requests' | 'profile';
 }) {
-  const drafts = useRef(new Map<string, FormDraft>());
   const [primary, setPrimary] = useState('');
   const [feed, setFeed] = useState('');
   const [ready, setReady] = useState(false);
@@ -187,7 +185,6 @@ export default function LocalityPanel({
               key={selected.id}
               company={selected}
               uid={uid}
-              drafts={drafts.current}
             />
           )}
           {page === 'requests' && (

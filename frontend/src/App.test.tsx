@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
+import { loadDraft, saveDraft } from './services/drafts';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
@@ -8,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   reset: vi.fn(),
   load: vi.fn(),
   save: vi.fn(),
+  authChanged: null as null | ((user: unknown) => void),
 }));
 vi.mock('./services/firebase', () => ({
   configuration: { ready: true },
@@ -16,6 +18,7 @@ vi.mock('./services/firebase', () => ({
 vi.mock('./services/profile', () => ({ loadProfile: mocks.load, saveProfile: mocks.save }));
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: (_auth: unknown, callback: (user: unknown) => void) => {
+    mocks.authChanged = callback;
     callback(mocks.user);
     return () => {};
   },
@@ -74,6 +77,17 @@ it('blocks profile access before email verification', () => {
   expect(screen.getByRole('heading', { name: 'Verify your email address' })).toBeInTheDocument();
   expect(mocks.load).not.toHaveBeenCalled();
   expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
+});
+it('clears the departing account drafts on sign-out and account switching', () => {
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  saveDraft('ada', 'hp', 'offer', { title: 'Desk' });
+  saveDraft('bea', 'hp', 'ask', { title: 'Help' });
+  render(<App />);
+  act(() => mocks.authChanged?.({ uid: 'bea', email: 'bea@example.com', emailVerified: true }));
+  expect(loadDraft('ada', 'hp', 'offer')).toBeUndefined();
+  expect(loadDraft('bea', 'hp', 'ask')).toEqual({ title: 'Help' });
+  act(() => mocks.authChanged?.(null));
+  expect(loadDraft('bea', 'hp', 'ask')).toBeUndefined();
 });
 it('loads and saves the signed-in user profile', async () => {
   window.history.replaceState({}, '', '/profile');

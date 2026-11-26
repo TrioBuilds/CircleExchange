@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Listings from './Listings';
 import { COMPANIES } from '../companies';
 import { loadListing, loadListings, postListing, markExchanged } from '../services/listings';
+import { saveDraft, loadDraft } from '../services/drafts';
 vi.mock('../services/listings', () => ({
   categories: ['goods', 'services'],
   loadListing: vi.fn(),
@@ -57,6 +58,7 @@ it('publishes a priced item, displays its details and lets its owner mark it exc
     pricePaise: 12550,
   });
   expect(await screen.findByText('goods · Pickup: Office lobby')).toBeVisible();
+  expect(loadDraft('ada', company.id, 'offer')).toBeUndefined();
   await user.click(await screen.findByText('Oak desk'));
   expect(screen.getByText(item.description)).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Mark exchanged' }));
@@ -140,24 +142,19 @@ it('publishes a discount with booking terms and shows net savings before interes
 
 it('rejects a helper fee that eliminates the discount and retains the draft', async () => {
   vi.mocked(loadListings).mockResolvedValue({ items: [], next: null });
-  const drafts = new Map([
-    [
-      'hp',
-      {
-        offer: 'discount',
-        title: 'Tickets',
-        description: 'Weekend tickets',
-        price: '500',
-        'max-discount': '500',
-        'booked-by': 'buyer',
-        'payment-terms': 'After booking',
-        'failure-terms': 'No fee',
-        'cancellation-terms': 'Discuss before booking',
-      },
-    ],
-  ]);
+  saveDraft('ada', 'hp', 'offer', {
+    offer: 'discount',
+    title: 'Tickets',
+    description: 'Weekend tickets',
+    price: '500',
+    'max-discount': '500',
+    'booked-by': 'buyer',
+    'payment-terms': 'After booking',
+    'failure-terms': 'No fee',
+    'cancellation-terms': 'Discuss before booking',
+  });
   const user = userEvent.setup();
-  render(<Listings company={COMPANIES[0]} uid="ada" drafts={drafts} />);
+  render(<Listings company={COMPANIES[0]} uid="ada" />);
   await user.click(screen.getByText('Offer something to your community'));
   await user.click(screen.getByRole('button', { name: 'Publish listing' }));
   expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -200,11 +197,8 @@ it('gives a safe unavailable state for a missing linked listing', async () => {
 
 it('restores each feed’s draft after switching away and back', async () => {
   vi.mocked(loadListings).mockResolvedValue({ items: [], next: null });
-  const drafts = new Map();
   const user = userEvent.setup();
-  const board = (id: string) => (
-    <Listings key={id} company={{ id, name: id }} uid="ada" drafts={drafts} />
-  );
+  const board = (id: string) => <Listings key={id} company={{ id, name: id }} uid="ada" />;
   const view = render(board('Alacrity'));
   await user.click(screen.getByText('Offer something to your community'));
   await user.type(screen.getByLabelText('Title'), 'My book');
@@ -218,4 +212,34 @@ it('restores each feed’s draft after switching away and back', async () => {
   await user.click(screen.getByText('Offer something to your community'));
   expect(screen.getByLabelText('Title')).toHaveValue('My book');
   expect(screen.getByLabelText('Price (INR)')).toHaveValue(12.5);
+  expect(Number(loadDraft('ada', 'Alacrity', 'offer')?.price)).toBe(12.5);
+  view.unmount();
+  render(board('Alacrity'));
+  await user.click(screen.getByText('Offer something to your community'));
+  expect(screen.getByLabelText('Title')).toHaveValue('My book');
+  await user.click(screen.getByRole('button', { name: 'Discard draft' }));
+  expect(loadDraft('ada', 'Alacrity', 'offer')).toBeUndefined();
+  expect(screen.getByLabelText('Title')).toHaveValue('');
+});
+it('restores the discount fee and booking terms after a full form remount', async () => {
+  vi.mocked(loadListings).mockResolvedValue({ items: [], next: null });
+  const user = userEvent.setup();
+  const view = render(<Listings company={COMPANIES[0]} uid="ada" />);
+  await user.click(screen.getByText('Offer something to your community'));
+  await user.selectOptions(screen.getByLabelText('Offer type'), 'discount');
+  await user.type(screen.getByLabelText('Helper fee (INR)'), '200');
+  await user.type(screen.getByLabelText('Maximum discount (INR)'), '500');
+  await user.selectOptions(screen.getByLabelText('Who books?'), 'helper');
+  await user.type(screen.getByLabelText('When is the helper fee paid?'), 'After booking');
+  await user.type(screen.getByLabelText('What happens if booking fails?'), 'No fee');
+  await user.type(screen.getByLabelText('Cancellation and refund terms'), 'Refund if I cancel');
+  view.unmount();
+  render(<Listings company={COMPANIES[0]} uid="ada" />);
+  expect(screen.getByLabelText('Offer type')).toHaveValue('discount');
+  expect(screen.getByLabelText('Helper fee (INR)')).toHaveValue(200);
+  expect(screen.getByLabelText('Maximum discount (INR)')).toHaveValue(500);
+  expect(screen.getByLabelText('Who books?')).toHaveValue('helper');
+  expect(screen.getByLabelText('When is the helper fee paid?')).toHaveValue('After booking');
+  expect(screen.getByLabelText('What happens if booking fails?')).toHaveValue('No fee');
+  expect(screen.getByLabelText('Cancellation and refund terms')).toHaveValue('Refund if I cancel');
 });
