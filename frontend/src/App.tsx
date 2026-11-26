@@ -6,6 +6,7 @@ import Workspace from './app/Workspace';
 import { currentPage } from './app/navigation';
 import AuthForm from './pages/AuthPage';
 import Verification from './pages/VerificationPage';
+import { clearDrafts } from './services/drafts';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -16,7 +17,10 @@ export default function App() {
       setLoading(false);
       return;
     }
+    let previousUid: string | undefined;
     return onAuthStateChanged(firebase.auth, (next) => {
+      if (previousUid && previousUid !== next?.uid) clearDrafts(previousUid);
+      previousUid = next?.uid;
       setUser(next);
       setVerified(next?.emailVerified ?? false);
       setLoading(false);

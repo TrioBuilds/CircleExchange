@@ -1,13 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import type { Company } from '../companies';
 import { categories, postListing, type DiscountDetails } from '../services/listings';
-
-export type FormDraft = Record<string, string>;
+import { useDraft } from '../hooks/useDraft';
 
 export default function ListingForm({
   company,
   uid,
-  drafts,
   busy,
   setBusy,
   setError,
@@ -16,7 +14,6 @@ export default function ListingForm({
 }: {
   company: Pick<Company, 'id' | 'name'>;
   uid: string;
-  drafts?: Map<string, FormDraft>;
   busy: boolean;
   setBusy: (value: boolean) => void;
   setError: (value: string) => void;
@@ -24,7 +21,7 @@ export default function ListingForm({
   onPublished: () => void;
 }) {
   const [formVersion, setFormVersion] = useState(0);
-  const draft = drafts?.get(company.id);
+  const { draft, save, clear, message: draftMessage } = useDraft(uid, company.id, 'offer');
   const [offer, setOffer] = useState(draft?.offer ?? 'free');
   const isDiscount = offer === 'discount';
 
@@ -85,9 +82,10 @@ export default function ListingForm({
         pricePaise,
         ...(discount ? { discount } : {}),
       });
-      drafts?.delete(company.id);
-      setFormVersion((v) => v + 1);
-      setOffer('free');
+      if (clear(true)) {
+        setFormVersion((v) => v + 1);
+        setOffer('free');
+      }
       onPublished();
     } catch {
       setError('Could not publish the listing. Your draft is still here.');
@@ -104,21 +102,14 @@ export default function ListingForm({
     >
       <summary>
         <span>Offer something to your community</span>
-        <small>Free items, goods, and services</small>
+        <small>{draft ? 'Continue your saved offer' : 'Free items, goods, and services'}</small>
       </summary>
       <p>
         {isDiscount
           ? 'Describe eligibility and conditions for the discount. Include any limits in the description.'
           : 'Include a shared pickup point instead of a private address.'}
       </p>
-      <form
-        key={formVersion}
-        onSubmit={submit}
-        onChange={(event) => {
-          const values = Object.fromEntries(new FormData(event.currentTarget)) as FormDraft;
-          drafts?.set(company.id, values);
-        }}
-      >
+      <form key={formVersion} onSubmit={submit} onChange={(event) => save(event.currentTarget)}>
         <label>
           Title
           <input name="title" defaultValue={draft?.title} maxLength={100} required />
@@ -222,6 +213,7 @@ export default function ListingForm({
             <input name="pickup" defaultValue={draft?.pickup} maxLength={120} required />
           </label>
         )}
+        <small aria-live="polite">{draftMessage}</small>
         <button className="primary" disabled={busy}>
           Publish listing
         </button>
@@ -229,7 +221,7 @@ export default function ListingForm({
           type="button"
           disabled={busy}
           onClick={() => {
-            drafts?.delete(company.id);
+            clear();
             setOffer('free');
             setFormVersion((v) => v + 1);
           }}
