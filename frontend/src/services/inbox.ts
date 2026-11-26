@@ -24,6 +24,7 @@ export type Entry = {
   status: InterestStatus;
   available: boolean;
   createdAt: number;
+  askDeadline?: number;
 };
 
 // Read canonical requests so previously submitted requests and live decisions appear without migration.
@@ -58,6 +59,7 @@ async function* boardPages(
         name: String(request.name),
         status: request.status as InterestStatus,
         available: data.status === 'available',
+        askDeadline: data.askDeadline?.toMillis(),
         createdAt: (request.createdAt as { toMillis: () => number }).toMillis(),
       });
       if (folder === 'Sent') {

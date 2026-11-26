@@ -12,6 +12,7 @@ import {
   startAfter,
   updateDoc,
   type QueryDocumentSnapshot,
+  type Timestamp,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
 import type { Company } from '../companies';
@@ -31,6 +32,7 @@ export type ListingDraft = {
   pricePaise: number;
   pickup: string;
   discount?: DiscountDetails;
+  askDeadline?: Timestamp;
 };
 export type Listing = ListingDraft & {
   id: string;

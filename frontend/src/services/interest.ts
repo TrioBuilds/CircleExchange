@@ -40,7 +40,11 @@ export async function decide(board: string, id: string, buyer: string, accept: b
   await runTransaction(firebase!.db, async (tx) => {
     const offer = await tx.get(item);
     const interest = await tx.get(request);
-    if (offer.data()?.status !== 'available' || interest.data()?.status !== 'pending')
+    if (
+      offer.data()?.status !== 'available' ||
+      interest.data()?.status !== 'pending' ||
+      (accept && offer.data()?.askDeadline?.toMillis() <= Date.now())
+    )
       throw new Error('Offer changed.');
     tx.update(request, { status: accept ? 'accepted' : 'declined' });
     if (accept) {

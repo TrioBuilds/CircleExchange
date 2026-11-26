@@ -1,4 +1,5 @@
 import Interest from './Interest';
+import { useEffect, useState } from 'react';
 import { listingUrl } from '../listingLink';
 import type { Listing } from '../services/listings';
 
@@ -23,21 +24,48 @@ export default function ListingCard({
   copyLink: (id: string) => Promise<void>;
   refresh: () => void;
 }) {
+  const deadline = item.askDeadline?.toMillis();
+  const [expanded, setExpanded] = useState(focused);
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (deadline === undefined || deadline <= now) return;
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.min(deadline - now, 2147483647));
+    return () => window.clearTimeout(timer);
+  }, [deadline, now]);
+  const expired = deadline !== undefined && deadline <= now;
+  const askState =
+    item.status === 'exchanged'
+      ? 'Closed'
+      : item.status === 'reserved'
+        ? 'Helper accepted'
+        : expired
+          ? 'Expired'
+          : 'Open ask';
   return (
-    <details className="listing-card" open={focused ? true : undefined}>
+    <details
+      className={item.askDeadline ? 'listing-card ask-card' : 'listing-card'}
+      open={focused ? true : undefined}
+      onToggle={(event) => setExpanded(event.currentTarget.open)}
+    >
       <summary>
         <span className="listing-title">{item.title}</span>
         <span className="listing-meta">
           <span>
-            {item.discount
-              ? `Helper fee ${currency.format(item.pricePaise / 100)}`
-              : item.pricePaise === 0
-                ? 'Free'
-                : currency.format(item.pricePaise / 100)}
+            {item.askDeadline
+              ? 'Ask my circle'
+              : item.discount
+                ? `Helper fee ${currency.format(item.pricePaise / 100)}`
+                : item.pricePaise === 0
+                  ? 'Free'
+                  : currency.format(item.pricePaise / 100)}
           </span>
-          <span className="status-tag">{item.status}</span>
+          <span className="status-tag">{item.askDeadline ? askState : item.status}</span>
         </span>
-        {item.discount ? (
+        {item.askDeadline ? (
+          <span className="listing-location">
+            Reply by {item.askDeadline.toDate().toLocaleString()}
+          </span>
+        ) : item.discount ? (
           <>
             <span className="discount-saving">
               Save up to {currency.format((item.discount.maxDiscountPaise - item.pricePaise) / 100)}{' '}
@@ -79,10 +107,16 @@ export default function ListingCard({
       {focused && <button onClick={() => void copyLink(item.id)}>Copy listing link</button>}
       {item.ownerId === uid && item.status !== 'exchanged' && (
         <button disabled={busy} onClick={() => void exchange(item.id)}>
-          Mark exchanged
+          {item.askDeadline ? 'Close ask' : 'Mark exchanged'}
         </button>
       )}
-      <Interest board={board} item={item} uid={uid} refresh={refresh} autoLoad={focused} />
+      <Interest
+        board={board}
+        item={item}
+        uid={uid}
+        refresh={refresh}
+        autoLoad={focused || (!!item.askDeadline && expanded)}
+      />
     </details>
   );
 }

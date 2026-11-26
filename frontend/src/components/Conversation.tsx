@@ -77,7 +77,7 @@ export default function Conversation({
     <section aria-label="Private conversation">
       <h4>Private conversation</h4>
       <p>
-        Only the accepted buyer and seller can read these messages. Arrange a shared pickup point
+        Only the two accepted participants can read these messages. Agree on the exchange details
         here.
       </p>
       {error && <p role="alert">{error}</p>}

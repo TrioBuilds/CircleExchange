@@ -99,7 +99,7 @@ it('uses signed-in copy on a direct listing link', () => {
   window.history.replaceState({}, '', '/?board=hp&listing=desk');
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
   render(<App />);
-  expect(screen.getByText('View this listing and its requests in your community.')).toBeVisible();
+  expect(screen.getByText('View this listing and its replies in your community.')).toBeVisible();
   expect(
     screen.queryByText('Sign in and verify your email to view community offers.'),
   ).not.toBeInTheDocument();
@@ -147,4 +147,29 @@ it('takes a member without a feed to community setup when they choose Post', asy
     }),
   );
   expect(community.scrollIntoView).toHaveBeenCalled();
+});
+it('opens the ask form separately from the offer form', async () => {
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  render(<App />);
+  const ask = document.createElement('details');
+  ask.className = 'compose ask-compose';
+  ask.scrollIntoView = vi.fn();
+  const offer = document.createElement('details');
+  offer.className = 'compose';
+  offer.scrollIntoView = vi.fn();
+  document.body.append(ask, offer);
+  try {
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Ask my circle' }));
+    expect(ask.open).toBe(true);
+    expect(offer.open).toBe(false);
+    await userEvent.setup().click(
+      within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', {
+        name: 'Post an offer',
+      }),
+    );
+    expect(offer.open).toBe(true);
+  } finally {
+    ask.remove();
+    offer.remove();
+  }
 });

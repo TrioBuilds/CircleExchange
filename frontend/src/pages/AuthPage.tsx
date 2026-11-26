@@ -148,7 +148,7 @@ export default function AuthForm() {
           <ul>
             <li>
               <strong>Feed</strong>
-              <span>Browse offers or post something you can share.</span>
+              <span>Browse offers, ask for help, or post something you can share.</span>
             </li>
             <li>
               <strong>Requests</strong>
