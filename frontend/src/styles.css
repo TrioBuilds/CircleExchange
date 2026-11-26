@@ -914,3 +914,24 @@ textarea:focus {
   color: var(--muted);
   margin-top: 18px;
 }
+.ask-compose {
+  border-color: var(--purple);
+  background: var(--soft);
+}
+.ask-card:not([open]) > summary::after {
+  content: 'View ask →';
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+.hero-actions button {
+  margin-top: 0;
+}
+@media (max-width: 420px) {
+  .hero-actions button {
+    flex: 1 1 auto;
+  }
+}

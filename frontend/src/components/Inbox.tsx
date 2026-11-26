@@ -84,6 +84,10 @@ export default function Inbox({
   return (
     <section aria-label="Requests inbox" id="requests">
       <h2>Requests inbox</h2>
+      <p>
+        Received includes replies to your asks and interest in your offers. Sent includes help
+        you’ve offered and offers you’ve requested.
+      </p>
       {(['Received', 'Sent'] as const).map((tab) => (
         <button
           key={tab}
@@ -112,20 +116,29 @@ export default function Inbox({
                 {folder === 'Received' && ' · ' + row.name}
               </p>
               <strong>
-                {row.status === 'pending' && !row.available
-                  ? 'Offer closed'
+                {row.status === 'pending' &&
+                (!row.available || (row.askDeadline !== undefined && row.askDeadline <= Date.now()))
+                  ? row.askDeadline !== undefined
+                    ? 'Ask closed'
+                    : 'Offer closed'
                   : row.status.charAt(0).toUpperCase() + row.status.slice(1)}
               </strong>
-              {folder === 'Received' && row.available && row.status === 'pending' && (
-                <>
-                  <button disabled={busy} onClick={() => void respond(row, true)}>
-                    Accept
-                  </button>
-                  <button disabled={busy} onClick={() => void respond(row, false)}>
-                    Decline
-                  </button>
-                </>
+              {row.askDeadline !== undefined && (
+                <p>Ask my circle · Reply by {new Date(row.askDeadline).toLocaleString()}</p>
               )}
+              {folder === 'Received' &&
+                row.available &&
+                row.status === 'pending' &&
+                (row.askDeadline === undefined || row.askDeadline > Date.now()) && (
+                  <>
+                    <button disabled={busy} onClick={() => void respond(row, true)}>
+                      Accept
+                    </button>
+                    <button disabled={busy} onClick={() => void respond(row, false)}>
+                      Decline
+                    </button>
+                  </>
+                )}
               {row.status === 'accepted' && (
                 <>
                   <button

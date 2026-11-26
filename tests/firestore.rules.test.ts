@@ -11,6 +11,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   writeBatch,
+  Timestamp,
   query,
   orderBy,
   limit,
@@ -341,6 +342,117 @@ describe('company listings', () => {
     ]) {
       await assertFails(setDoc(doc(db, path, 'invalid'), { ...offer, ...invalid }));
     }
+  });
+});
+
+describe('asks and help replies', () => {
+  const path = 'communities/hp/listings/ask';
+  const account = (uid: string) =>
+    env.authenticatedContext(uid, { email: uid + '@hp.com', email_verified: true }).firestore();
+  const ask = () => ({
+    ownerId: 'asking',
+    title: 'Movie ticket help',
+    description: 'Two seats tonight',
+    category: 'services',
+    pickup: '',
+    pricePaise: 0,
+    status: 'available',
+    createdAt: serverTimestamp(),
+    askDeadline: Timestamp.fromMillis(Date.now() + 3600000),
+  });
+  const reply = () => ({ name: 'Neighbor', status: 'pending', createdAt: serverTimestamp() });
+  async function members() {
+    await env.withSecurityRulesDisabled(async (context) => {
+      for (const uid of ['asking', 'helper', 'other'])
+        await setDoc(doc(context.firestore(), 'communities/hp/members/' + uid), {
+          status: 'active',
+        });
+    });
+  }
+  const accept = (helper: string) => {
+    const db = account('asking');
+    const batch = writeBatch(db);
+    batch.update(doc(db, path + '/requests/' + helper), { status: 'accepted' });
+    batch.set(doc(db, path + '/private/reservation'), { buyer: helper });
+    batch.update(doc(db, path), { status: 'reserved' });
+    return batch.commit();
+  };
+  it('requires bounded future deadlines and preserves ask details after posting', async () => {
+    await members();
+    const db = account('asking');
+    for (const invalid of [
+      { askDeadline: Timestamp.fromMillis(Date.now() - 1000) },
+      { askDeadline: Timestamp.fromMillis(Date.now() + 31 * 86400000) },
+      { askDeadline: 'tomorrow' },
+      { ownerId: 'helper' },
+      { pricePaise: 100 },
+      { pickup: 'Lobby' },
+      { discount: {} },
+    ])
+      await assertFails(setDoc(doc(db, path), { ...ask(), ...invalid }));
+    await assertSucceeds(setDoc(doc(db, path), ask()));
+    await assertFails(
+      updateDoc(doc(db, path), { askDeadline: Timestamp.fromMillis(Date.now() + 7200000) }),
+    );
+    await assertFails(getDoc(doc(account('outsider'), path)));
+    await assertFails(setDoc(doc(db, path + '/requests/asking'), reply()));
+    await assertSucceeds(updateDoc(doc(db, path), { status: 'exchanged' }));
+    await assertFails(setDoc(doc(account('helper'), path + '/requests/helper'), reply()));
+  });
+  it('accepts one helper, exposes the reply in both inboxes, and protects the conversation', async () => {
+    await members();
+    await setDoc(doc(account('asking'), path), ask());
+    await assertSucceeds(setDoc(doc(account('helper'), path + '/requests/helper'), reply()));
+    await assertFails(setDoc(doc(account('helper'), path + '/requests/helper'), reply()));
+    await assertFails(getDoc(doc(account('other'), path + '/requests/helper')));
+    await setDoc(doc(account('other'), path + '/requests/other'), reply());
+    const results = await Promise.allSettled([accept('helper'), accept('other')]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const winner = results[0].status === 'fulfilled' ? 'helper' : 'other';
+    const loser = winner === 'helper' ? 'other' : 'helper';
+    const sent = await inboxPages(
+      account(winner),
+      [{ id: 'hp', name: 'HP' }],
+      winner,
+      'Sent',
+    ).next();
+    expect(sent.value).toMatchObject([{ status: 'accepted', askDeadline: expect.any(Number) }]);
+    const received = await inboxPages(
+      account('asking'),
+      [{ id: 'hp', name: 'HP' }],
+      'asking',
+      'Received',
+    ).next();
+    expect(received.value.some((entry) => entry.status === 'accepted')).toBe(true);
+    await env.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), path), {
+        askDeadline: Timestamp.fromMillis(Date.now() - 1000),
+      });
+    });
+    const message = {
+      senderId: winner,
+      text: 'I can book those seats',
+      createdAt: serverTimestamp(),
+    };
+    await assertSucceeds(setDoc(doc(account(winner), path + '/messages/one'), message));
+    await assertSucceeds(
+      getDocs(query(collection(account('asking'), path + '/messages'), limit(30))),
+    );
+    await assertFails(getDocs(query(collection(account(loser), path + '/messages'), limit(30))));
+  });
+  it('rejects new help and acceptance after expiry even with stale client data', async () => {
+    await members();
+    await setDoc(doc(account('asking'), path), ask());
+    await setDoc(doc(account('helper'), path + '/requests/helper'), reply());
+    await env.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), path), {
+        askDeadline: Timestamp.fromMillis(Date.now() - 1000),
+      });
+    });
+    await assertFails(setDoc(doc(account('other'), path + '/requests/other'), reply()));
+    await assertFails(accept('helper'));
+    await assertFails(getDocs(query(collection(account('helper'), path + '/messages'), limit(30))));
+    await assertSucceeds(updateDoc(doc(account('asking'), path), { status: 'exchanged' }));
   });
 });
 

@@ -23,6 +23,9 @@ export default function Interest({
   autoLoad?: boolean;
 }) {
   const owner = uid === item.ownerId;
+  const isAsk = !!item.askDeadline;
+  const expired = !!item.askDeadline && item.askDeadline.toMillis() <= Date.now();
+  const acceptingReplies = item.status === 'available' && !expired;
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -50,17 +53,25 @@ export default function Interest({
     setLoaded(true);
   }
   useEffect(() => {
-    if (autoLoad) void run(load);
-  }, [autoLoad]);
+    if (autoLoad || loaded) void run(load);
+  }, [autoLoad, item.status]);
   return (
     <div>
       <button disabled={busy} onClick={() => void run(load)}>
-        {loaded ? 'Refresh requests' : owner ? 'View interest requests' : 'View my interest'}
+        {loaded
+          ? 'Refresh requests'
+          : owner
+            ? isAsk
+              ? 'View helpers'
+              : 'View interest requests'
+            : isAsk
+              ? 'View my reply'
+              : 'View my interest'}
       </button>
       {error && <p role="alert">{error}</p>}
       {loaded &&
         owner &&
-        item.status === 'available' &&
+        acceptingReplies &&
         (requests.length ? (
           requests.map((request) => (
             <div key={request.uid}>
@@ -72,8 +83,10 @@ export default function Interest({
                   onClick={() =>
                     void run(async () => {
                       await decide(board, item.id, request.uid, choice === 'Accept');
-                      if (choice === 'Accept') refresh();
-                      else await load();
+                      if (choice === 'Accept') {
+                        setRequests([request]);
+                        refresh();
+                      } else await load();
                     })
                   }
                 >
@@ -86,17 +99,25 @@ export default function Interest({
           <p>No pending requests.</p>
         ))}
       {loaded && owner && item.status !== 'available' && (
-        <p>{requests[0] ? 'Accepted buyer: ' + requests[0].name : 'No accepted request.'}</p>
+        <p>
+          {requests[0]
+            ? (isAsk ? 'Accepted helper: ' : 'Accepted buyer: ') + requests[0].name
+            : 'No accepted request.'}
+        </p>
       )}
       {loaded &&
         !owner &&
         (status ? (
           <p>
-            Your request:{' '}
-            {status === 'pending' && item.status !== 'available' ? 'offer closed' : status}
+            {isAsk ? 'Your reply: ' : 'Your request: '}
+            {status === 'pending' && !acceptingReplies
+              ? isAsk
+                ? 'ask closed'
+                : 'offer closed'
+              : status}
           </p>
         ) : (
-          item.status === 'available' && (
+          acceptingReplies && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -107,7 +128,7 @@ export default function Interest({
               }}
             >
               <label>
-                Name to share with the seller
+                {isAsk ? 'Name to share with the person asking' : 'Name to share with the seller'}
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -116,7 +137,7 @@ export default function Interest({
                 />
               </label>
               <button className="primary" disabled={busy || !name.trim()}>
-                I’m interested
+                {isAsk ? 'I can help' : 'I’m interested'}
               </button>
             </form>
           )

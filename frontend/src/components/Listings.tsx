@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import ListingCard from './ListingCard';
 import ListingForm, { type FormDraft } from './ListingForm';
+import AskForm from './AskForm';
+import { openAsk } from '../app/navigation';
 import type { Company } from '../companies';
 import { linkedListing, listingUrl } from '../listingLink';
 import {
@@ -84,7 +86,7 @@ export default function Listings({
     setError('');
     try {
       await markExchanged(company, id);
-      setNotice('Listing marked as exchanged.');
+      setNotice('Listing closed.');
       refresh();
     } catch {
       setError('Could not update this listing. Refresh and try again.');
@@ -136,6 +138,9 @@ export default function Listings({
         </div>
         <button className="secondary" disabled={busy || loading} onClick={refresh}>
           Refresh feed
+        </button>
+        <button className="primary" onClick={openAsk}>
+          Ask my circle
         </button>
       </div>
       <fieldset className="feed-filter">
@@ -196,6 +201,13 @@ export default function Listings({
           setNotice('Listing published.');
           refresh();
         }}
+      />
+      <AskForm
+        key={'ask:' + company.id}
+        company={company}
+        uid={uid}
+        drafts={drafts}
+        onPublished={refresh}
       />
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}

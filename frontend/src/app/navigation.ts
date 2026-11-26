@@ -16,11 +16,19 @@ export function currentPage(): Page | null {
 }
 
 export function openPost() {
-  const composer = document.querySelector<HTMLDetailsElement>('.compose');
+  openComposer('.compose:not(.ask-compose)', '#post-offer');
+}
+
+export function openAsk() {
+  openComposer('.ask-compose', '#ask-circle');
+}
+
+function openComposer(selector: string, hash: string) {
+  const composer = document.querySelector<HTMLDetailsElement>(selector);
   if (composer) {
     composer.open = true;
     composer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } else if (currentPage() !== 'feed' || linkedListing()) window.location.href = '/feed#post-offer';
+  } else if (currentPage() !== 'feed' || linkedListing()) window.location.href = '/feed' + hash;
   else
     document
       .querySelector('[aria-label="Your community"]')

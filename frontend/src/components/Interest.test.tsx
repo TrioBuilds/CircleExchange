@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import Interest from './Interest';
+import { Timestamp } from 'firebase/firestore';
 import { decide, myInterest, requestInterest, requestNames } from '../services/interest';
 vi.mock('../services/interest', () => ({
   myInterest: vi.fn(),
@@ -50,4 +51,26 @@ it('opens a conversation only for an accepted request', async () => {
   await user.click(screen.getByRole('button', { name: 'View my interest' }));
   await user.click(await screen.findByRole('button', { name: 'Open conversation' }));
   expect(screen.getByText('Conversation loaded')).toBeVisible();
+});
+it('lets a neighbor offer help and prevents new replies after expiry', async () => {
+  vi.mocked(myInterest).mockResolvedValue(undefined);
+  vi.mocked(requestInterest).mockClear();
+  const user = userEvent.setup();
+  const ask = { ...item, askDeadline: Timestamp.fromMillis(Date.now() + 3600000) };
+  const view = render(<Interest board="hp" item={ask} uid="neighbor" refresh={vi.fn()} />);
+  await user.click(screen.getByRole('button', { name: 'View my reply' }));
+  await user.type(await screen.findByLabelText('Name to share with the person asking'), 'Sam');
+  await user.click(screen.getByRole('button', { name: 'I can help' }));
+  expect(requestInterest).toHaveBeenCalledWith('hp', 'book', 'neighbor', 'Sam');
+  view.unmount();
+  render(
+    <Interest
+      board="hp"
+      item={{ ...ask, askDeadline: Timestamp.fromMillis(Date.now() - 1000) }}
+      uid="neighbor"
+      refresh={vi.fn()}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'View my reply' }));
+  expect(screen.queryByRole('button', { name: 'I can help' })).not.toBeInTheDocument();
 });
