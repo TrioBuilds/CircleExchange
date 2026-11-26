@@ -34,3 +34,27 @@ it('accepts a received request in place and shows accepted requests in Sent', as
   expect(await screen.findByText('Accepted')).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull();
 });
+it('shows the private helper note in Received and Sent', async () => {
+  const row: Entry = {
+    board: { id: 'hp', name: 'HP' },
+    listingId: 'ask',
+    title: 'Ticket help',
+    buyer: 'sam',
+    name: 'Sam',
+    status: 'pending',
+    available: true,
+    createdAt: 1,
+    askDeadline: Date.now() + 3600000,
+    note: 'I can book tonight for ₹100.',
+  };
+  vi.mocked(inboxPages).mockImplementation(async function* () {
+    yield [row];
+    return [];
+  });
+  const user = userEvent.setup();
+  render(<Inbox boards={[row.board]} uid="asking" />);
+  await user.click(screen.getByRole('button', { name: 'Received' }));
+  expect(await screen.findByText(row.note!)).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Sent' }));
+  expect(await screen.findByText(row.note!)).toBeVisible();
+});

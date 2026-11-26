@@ -5,6 +5,7 @@ import {
   requestInterest,
   requestNames,
   type InterestStatus,
+  type InterestReply,
 } from '../services/interest';
 import type { Listing } from '../services/listings';
 import Conversation from './Conversation';
@@ -30,8 +31,9 @@ export default function Interest({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [name, setName] = useState('');
+  const [note, setNote] = useState('');
   const [status, setStatus] = useState<InterestStatus>();
-  const [requests, setRequests] = useState<{ uid: string; name: string }[]>([]);
+  const [requests, setRequests] = useState<InterestReply[]>([]);
   const [conversationOpen, setConversationOpen] = useState(false);
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -76,6 +78,9 @@ export default function Interest({
           requests.map((request) => (
             <div key={request.uid}>
               <strong>{request.name}</strong>
+              {(isAsk || request.note) && (
+                <p className="reply-note">{request.note || 'This earlier reply has no note.'}</p>
+              )}
               {['Accept', 'Decline'].map((choice) => (
                 <button
                   key={choice}
@@ -105,6 +110,9 @@ export default function Interest({
             : 'No accepted request.'}
         </p>
       )}
+      {loaded && owner && item.status !== 'available' && requests[0]?.note && (
+        <p className="reply-note">{requests[0].note}</p>
+      )}
       {loaded &&
         !owner &&
         (status ? (
@@ -122,7 +130,8 @@ export default function Interest({
               onSubmit={(e) => {
                 e.preventDefault();
                 void run(async () => {
-                  await requestInterest(board, item.id, uid, name);
+                  if (isAsk) await requestInterest(board, item.id, uid, name, note);
+                  else await requestInterest(board, item.id, uid, name);
                   setStatus('pending');
                 });
               }}
@@ -136,7 +145,28 @@ export default function Interest({
                   maxLength={60}
                 />
               </label>
-              <button className="primary" disabled={busy || !name.trim()}>
+              {isAsk && (
+                <>
+                  <label>
+                    How can you help?
+                    <textarea
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      maxLength={500}
+                      required
+                      aria-describedby={'reply-help-' + item.id}
+                    />
+                  </label>
+                  <small id={'reply-help-' + item.id}>
+                    Describe your help, availability, and any fee. Only you and the person asking
+                    can read this reply.
+                  </small>
+                </>
+              )}
+              <button
+                className="primary"
+                disabled={busy || !name.trim() || (isAsk && !note.trim())}
+              >
                 {isAsk ? 'I can help' : 'I’m interested'}
               </button>
             </form>
