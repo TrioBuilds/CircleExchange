@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it, vi } from 'vitest';
 import LocalityPanel from './LocalityPanel';
-import { suggestArea } from '../localities';
+import { matchLocation } from '../localities';
 const mocks = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn(),
@@ -77,12 +77,65 @@ it('keeps onboarding available after a stale reading or failed save', async () =
   expect(await screen.findByRole('alert')).toHaveTextContent('Could not save');
   expect(screen.getByRole('button', { name: 'Find my circle' })).toBeEnabled();
 });
-it('suggests Baner nearby and leaves distant, imprecise and boundary readings unassigned', () => {
-  expect(suggestArea(18.5565184, 73.7574912, 20)?.name).toBe('Baner');
-  expect(suggestArea(18.56, 73.79028, 50)?.name).toBe('Baner');
-  expect(suggestArea(12, 77, 10)).toBeNull();
-  expect(suggestArea(18.56, 73.79028, 1500)).toBeNull();
-  expect(suggestArea(18.582, 73.79028, 150)).toBeNull();
+it('distinguishes supported locations, unsupported cities, and uncertain readings', () => {
+  expect(matchLocation(18.5565184, 73.7574912, 20)).toMatchObject({
+    status: 'matched',
+    area: { name: 'Baner' },
+  });
+  expect(matchLocation(18.56, 73.79028, 50)).toMatchObject({
+    status: 'matched',
+    area: { name: 'Baner' },
+  });
+  expect(matchLocation(17.385, 78.4867, 20)).toEqual({ status: 'outside' });
+  expect(matchLocation(12, 77, 10)).toEqual({ status: 'outside' });
+  expect(matchLocation(18.56, 73.79028, 1500)).toEqual({ status: 'uncertain' });
+  expect(matchLocation(18.582, 73.79028, 150)).toEqual({ status: 'uncertain' });
+  expect(matchLocation(NaN, 73.79028, 20)).toEqual({ status: 'uncertain' });
+});
+it('shows service coverage before capture and a clear unsupported-area result for Hyderabad', async () => {
+  mocks.save.mockClear();
+  mocks.load.mockResolvedValue({ data: () => undefined });
+  const geo = vi.fn((success) =>
+    success({
+      coords: { latitude: 17.385, longitude: 78.4867, accuracy: 20 },
+      timestamp: Date.now(),
+    }),
+  );
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: { getCurrentPosition: geo },
+  });
+  const user = userEvent.setup();
+  render(<LocalityPanel uid="ada" />);
+  const button = await screen.findByRole('button', { name: 'Find my circle' });
+  expect(screen.getByRole('heading', { name: 'Local community setup' })).toBeVisible();
+  expect(screen.getByText(/Current service coverage:/)).toBeVisible();
+  expect(geo).not.toHaveBeenCalled();
+  await user.click(button);
+  expect(await screen.findByRole('status')).toHaveTextContent('hasn’t launched in your area yet');
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(screen.queryByText('Baner listings')).not.toBeInTheDocument();
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+it('offers an accuracy retry for an uncertain reading without assigning a circle', async () => {
+  mocks.save.mockClear();
+  mocks.load.mockResolvedValue({ data: () => undefined });
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: {
+      getCurrentPosition: vi.fn((success) =>
+        success({
+          coords: { latitude: 18.56, longitude: 73.79028, accuracy: 1500 },
+          timestamp: Date.now(),
+        }),
+      ),
+    },
+  });
+  render(<LocalityPanel uid="ada" />);
+  await userEvent.setup().click(await screen.findByRole('button', { name: 'Find my circle' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('too imprecise');
+  expect(mocks.save).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Find my circle' })).toBeEnabled();
 });
 it('opens a linked parent feed only when the member can access it', async () => {
   window.history.replaceState({}, '', '/?board=local%3Apune%3Abaner&listing=desk');

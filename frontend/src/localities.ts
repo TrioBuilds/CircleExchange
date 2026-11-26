@@ -8,8 +8,13 @@ export function hierarchy(id: string) {
   return index < 0 ? [] : areas.slice(index);
 }
 
+type LocationMatch =
+  | { status: 'matched'; area: (typeof areas)[number] }
+  | { status: 'outside' }
+  | { status: 'uncertain' };
+
 // Baner neighborhood reference point (Wikidata Q4801087), not a boundary.
-export function suggestArea(lat: number, lon: number, accuracy: number) {
+export function matchLocation(lat: number, lon: number, accuracy: number): LocationMatch {
   if (
     ![lat, lon, accuracy].every(Number.isFinite) ||
     Math.abs(lat) > 90 ||
@@ -17,12 +22,17 @@ export function suggestArea(lat: number, lon: number, accuracy: number) {
     accuracy < 0 ||
     accuracy > 500
   )
-    return null;
+    return { status: 'uncertain' };
   // Approximate center from the user-supplied public Alacrity Apartment map.
   // https://share.google/aIMwxd7MZYfDGOpmu — suggest proximity, never residency.
   const apartmentDistance = Math.hypot((lat - 18.5565184) * 111320, (lon - 73.7574912) * 105500);
   // shortcut: pilot circles use conservative proximity coverage; validate polygons before automatic apartment enrollment.
-  if (apartmentDistance + accuracy <= 1000) return areas[1];
   const distance = Math.hypot((lat - 18.56) * 111320, (lon - 73.79028) * 105500);
-  return distance + accuracy <= 2500 ? areas[1] : null;
+  if (apartmentDistance + accuracy <= 1000 || distance + accuracy <= 2500) {
+    return { status: 'matched', area: areas[1] };
+  }
+  if (apartmentDistance - accuracy > 1000 && distance - accuracy > 2500) {
+    return { status: 'outside' };
+  }
+  return { status: 'uncertain' };
 }

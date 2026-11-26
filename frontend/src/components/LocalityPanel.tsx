@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { doc, getDocFromServer, setDoc } from 'firebase/firestore';
 import { firebase } from '../services/firebase';
-import { hierarchy, suggestArea } from '../localities';
+import { hierarchy, matchLocation } from '../localities';
 import Inbox from './Inbox';
 import Listings from './Listings';
 import type { FormDraft } from './ListingForm';
@@ -62,14 +62,22 @@ export default function LocalityPanel({
           setBusy(false);
           return;
         }
-        const area = suggestArea(coords.latitude, coords.longitude, coords.accuracy);
-        if (!area) {
-          setError(
-            'We could not confidently match your location to our Baner pilot coverage. Try again outdoors near your community.',
+        const match = matchLocation(coords.latitude, coords.longitude, coords.accuracy);
+        if (match.status === 'outside') {
+          setHint(
+            'CircleExchange hasn’t launched in your area yet. Local circles are currently available only in parts of Baner, Pune.',
           );
           setBusy(false);
           return;
         }
+        if (match.status === 'uncertain') {
+          setError(
+            'Your location reading is too imprecise or overlaps the edge of our coverage. Try again outdoors with precise location enabled.',
+          );
+          setBusy(false);
+          return;
+        }
+        const area = match.area;
         void setDoc(doc(firebase!.db, 'localityMemberships', uid), { areaId: area.id })
           .then(() => {
             setPrimary(area.id);
@@ -99,7 +107,7 @@ export default function LocalityPanel({
   const link = page === 'feed' ? linkedListing() : null;
   return (
     <section aria-label="Locality community">
-      <h2>Your locality community</h2>
+      <h2>{primary ? 'Your locality community' : 'Local community setup'}</h2>
       {error && <p role="alert">{error}</p>}
       {hint && <p role="status">{hint}</p>}
       {!ready ? (
@@ -112,12 +120,16 @@ export default function LocalityPanel({
         <>
           <h3>Find your local circle</h3>
           <p>
-            Check your location while you’re in the area where you want to exchange. We’ll open the
-            closest supported circle automatically.
+            Tap Find my circle to check whether a local community is available where you are. Your
+            browser will ask for location access if needed.
           </p>
           <p>
-            Our pilot covers parts of Baner, Pune. Your coordinates stay on this device. We save
-            your circle.
+            Current service coverage: parts of Baner, Pune. We’ll check your location when you tap
+            the button below.
+          </p>
+          <p>
+            Your coordinates are processed on this device. If a circle is available, we save its
+            community ID to your account.
           </p>
           {primary && (
             <p>
