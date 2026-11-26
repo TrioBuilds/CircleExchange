@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { Company } from '../companies';
-import { categories, postListing } from '../services/listings';
+import { categories, postListing, type DiscountDetails } from '../services/listings';
 
 export type FormDraft = Record<string, string>;
 
@@ -25,25 +25,51 @@ export default function ListingForm({
 }) {
   const [formVersion, setFormVersion] = useState(0);
   const draft = drafts?.get(company.id);
-  const [free, setFree] = useState(draft?.offer !== 'paid');
+  const [offer, setOffer] = useState(draft?.offer ?? 'free');
+  const isDiscount = offer === 'discount';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setNotice('');
     const form = event.currentTarget;
     const fields = new FormData(form);
     const value = (name: string) => String(fields.get(name) ?? '').trim();
     const title = value('title');
     const description = value('description');
-    const pickup = value('pickup');
-    const category = categories.find((item) => item === value('category'));
-    const pricePaise = free ? 0 : Math.round(Number(value('price')) * 100);
-    setNotice('');
+    const pickup = isDiscount ? '' : value('pickup');
+    const category = isDiscount
+      ? 'services'
+      : categories.find((item) => item === value('category'));
+    const pricePaise = offer === 'free' ? 0 : Math.round(Number(value('price')) * 100);
+    let discount: DiscountDetails | undefined;
+    if (isDiscount) {
+      const maxDiscountPaise = Math.round(Number(value('max-discount')) * 100);
+      const bookedBy = value('booked-by');
+      const paymentTerms = value('payment-terms');
+      const failureTerms = value('failure-terms');
+      const cancellationTerms = value('cancellation-terms');
+      if (
+        !Number.isSafeInteger(maxDiscountPaise) ||
+        maxDiscountPaise > 100000000 ||
+        maxDiscountPaise <= pricePaise ||
+        !paymentTerms ||
+        !failureTerms ||
+        !cancellationTerms ||
+        (bookedBy !== 'helper' && bookedBy !== 'buyer')
+      ) {
+        setError('Enter a discount greater than the helper fee and complete all booking terms.');
+        return;
+      }
+      discount = { maxDiscountPaise, bookedBy, paymentTerms, failureTerms, cancellationTerms };
+    }
     if (
       !title ||
       !description ||
-      !pickup ||
+      (!isDiscount && !pickup) ||
       !category ||
-      (!free && (!Number.isSafeInteger(pricePaise) || pricePaise < 1 || pricePaise > 100000000))
+      !Number.isSafeInteger(pricePaise) ||
+      pricePaise < (isDiscount ? 0 : offer === 'paid' ? 1 : 0) ||
+      pricePaise > 100000000
     ) {
       setError('Enter the item details and a valid price.');
       return;
@@ -51,10 +77,17 @@ export default function ListingForm({
     setBusy(true);
     setError('');
     try {
-      await postListing(company, uid, { title, description, category, pickup, pricePaise });
+      await postListing(company, uid, {
+        title,
+        description,
+        category,
+        pickup,
+        pricePaise,
+        ...(discount ? { discount } : {}),
+      });
       drafts?.delete(company.id);
       setFormVersion((v) => v + 1);
-      setFree(true);
+      setOffer('free');
       onPublished();
     } catch {
       setError('Could not publish the listing. Your draft is still here.');
@@ -73,7 +106,11 @@ export default function ListingForm({
         <span>Offer something to your community</span>
         <small>Free items, goods, and services</small>
       </summary>
-      <p>Include a shared pickup point instead of a private address.</p>
+      <p>
+        {isDiscount
+          ? 'Describe eligibility and conditions for the discount. Include any limits in the description.'
+          : 'Include a shared pickup point instead of a private address.'}
+      </p>
       <form
         key={formVersion}
         onSubmit={submit}
@@ -95,43 +132,96 @@ export default function ListingForm({
             required
           />
         </label>
-        <label>
-          Category
-          <select name="category" defaultValue={draft?.category}>
-            {categories.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-        </label>
+        {!isDiscount && (
+          <label>
+            Category
+            <select name="category" defaultValue={draft?.category}>
+              {categories.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
           Offer type
-          <select
-            name="offer"
-            value={free ? 'free' : 'paid'}
-            onChange={(e) => setFree(e.target.value === 'free')}
-          >
+          <select name="offer" value={offer} onChange={(e) => setOffer(e.target.value)}>
             <option value="free">Free</option>
             <option value="paid">For sale</option>
+            <option value="discount">Discount offer</option>
           </select>
         </label>
-        {!free && (
+        {offer !== 'free' && (
           <label>
-            Price (INR)
+            {isDiscount ? 'Helper fee (INR)' : 'Price (INR)'}
             <input
               name="price"
               defaultValue={draft?.price}
               type="number"
-              min="0.01"
+              min={isDiscount ? '0' : '0.01'}
               max="1000000"
               step="0.01"
               required
             />
           </label>
         )}
-        <label>
-          Pickup location
-          <input name="pickup" defaultValue={draft?.pickup} maxLength={120} required />
-        </label>
+        {isDiscount ? (
+          <fieldset className="discount-fields">
+            <legend>Discount and booking terms</legend>
+            <label>
+              Maximum discount (INR)
+              <input
+                name="max-discount"
+                type="number"
+                min="0.01"
+                max="1000000"
+                step="0.01"
+                defaultValue={draft?.['max-discount']}
+                required
+              />
+            </label>
+            <small>We subtract your fee from this amount to show the maximum net saving.</small>
+            <label>
+              Who books?
+              <select name="booked-by" defaultValue={draft?.['booked-by'] ?? ''} required>
+                <option value="">Choose who books</option>
+                <option value="helper">Helper books</option>
+                <option value="buyer">Buyer books</option>
+              </select>
+            </label>
+            <label>
+              When is the helper fee paid?
+              <textarea
+                name="payment-terms"
+                maxLength={500}
+                defaultValue={draft?.['payment-terms']}
+                required
+              />
+            </label>
+            <label>
+              What happens if booking fails?
+              <textarea
+                name="failure-terms"
+                maxLength={500}
+                defaultValue={draft?.['failure-terms']}
+                required
+              />
+            </label>
+            <label>
+              Cancellation and refund terms
+              <textarea
+                name="cancellation-terms"
+                maxLength={500}
+                defaultValue={draft?.['cancellation-terms']}
+                required
+              />
+            </label>
+          </fieldset>
+        ) : (
+          <label>
+            Pickup location
+            <input name="pickup" defaultValue={draft?.pickup} maxLength={120} required />
+          </label>
+        )}
         <button className="primary" disabled={busy}>
           Publish listing
         </button>
@@ -140,7 +230,7 @@ export default function ListingForm({
           disabled={busy}
           onClick={() => {
             drafts?.delete(company.id);
-            setFree(true);
+            setOffer('free');
             setFormVersion((v) => v + 1);
           }}
         >

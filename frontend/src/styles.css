@@ -873,3 +873,44 @@ textarea:focus {
     scroll-behavior: auto;
   }
 }
+
+.discount-saving {
+  display: block;
+  width: fit-content;
+  margin: 12px 0;
+  padding: 8px 12px;
+  background: var(--lime);
+  color: var(--ink);
+  border-radius: 10px;
+  font-weight: 800;
+}
+.discount-fields {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  margin: 20px 0;
+}
+.discount-fields legend {
+  font-weight: 800;
+  padding: 0 6px;
+}
+.discount-terms {
+  margin: 20px 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--soft);
+}
+.discount-terms dt {
+  font-weight: 800;
+  margin-top: 14px;
+}
+.discount-terms dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.discount-terms p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 18px;
+}

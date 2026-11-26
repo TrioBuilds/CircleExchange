@@ -84,17 +84,31 @@ service cloud.firestore {
     function listingText(value, maximum) {
       return value is string && value.size() <= maximum && value.trim().size() > 0;
     }
+    function validDiscount(data) {
+      let discount = data.discount;
+      return data.category == 'services' && data.pickup == ''
+        && discount is map
+        && discount.keys().hasAll(['maxDiscountPaise', 'bookedBy', 'paymentTerms', 'failureTerms', 'cancellationTerms'])
+        && discount.keys().hasOnly(['maxDiscountPaise', 'bookedBy', 'paymentTerms', 'failureTerms', 'cancellationTerms'])
+        && discount.maxDiscountPaise is int
+        && discount.maxDiscountPaise > data.pricePaise && discount.maxDiscountPaise <= 100000000
+        && discount.bookedBy in ['helper', 'buyer']
+        && listingText(discount.paymentTerms, 500)
+        && listingText(discount.failureTerms, 500)
+        && listingText(discount.cancellationTerms, 500);
+    }
     match /communities/{companyId}/listings/{listingId} {
       allow get: if activeMember(companyId);
       allow list: if activeMember(companyId) && request.query.limit <= 21;
       allow create: if activeMember(companyId)
-        && request.resource.data.keys().hasOnly(['ownerId', 'title', 'description', 'category', 'pickup', 'pricePaise', 'status', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['ownerId', 'title', 'description', 'category', 'pickup', 'pricePaise', 'status', 'createdAt', 'discount'])
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.status == 'available'
         && request.resource.data.createdAt == request.time
         && listingText(request.resource.data.title, 100)
         && listingText(request.resource.data.description, 1500)
-        && listingText(request.resource.data.pickup, 120)
+        && (request.resource.data.keys().hasAny(['discount'])
+          ? validDiscount(request.resource.data) : listingText(request.resource.data.pickup, 120))
         && request.resource.data.category in ['goods', 'services']
         && request.resource.data.pricePaise is int
         && request.resource.data.pricePaise >= 0 && request.resource.data.pricePaise <= 100000000;
