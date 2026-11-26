@@ -7,6 +7,7 @@ import {
 import { firebase } from '../services/firebase';
 import { friendlyError } from '../errors';
 import Notice from '../components/Notice';
+import ExchangeExample from '../components/ExchangeExample';
 
 export default function AuthForm() {
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
@@ -42,17 +43,40 @@ export default function AuthForm() {
     }
   }
   return (
-    <>
-      <p className="eyebrow">YOUR COMMUNITY STARTS HERE</p>
-      <h1>A place for your people.</h1>
-      <p className="intro">
-        Make room for useful exchanges, familiar faces, and a stronger community.
-      </p>
-      <div className="account-grid">
-        <section className="card">
+    <div className="welcome">
+      <div className="welcome-hero">
+        <div className="welcome-copy">
+          <p className="eyebrow">GOOD THINGS. PEOPLE CLOSE BY.</p>
+          <h1>
+            Your next good find <span>could be next door.</span>
+          </h1>
+          <p className="intro">
+            Buy a secondhand desk, offer a service, or save on movie tickets with people in your
+            workplace or neighborhood.
+          </p>
+          <div className="welcome-actions">
+            <a className="primary" href="#welcome-account" onClick={() => changeMode('register')}>
+              Join my circle
+            </a>
+            <a className="secondary" href="#welcome-account" onClick={() => changeMode('login')}>
+              Sign in
+            </a>
+          </div>
+          <p className="welcome-caption">
+            A community marketplace for everyday things and a little help.
+          </p>
+        </div>
+        <ExchangeExample />
+      </div>
+      <div className="account-grid welcome-account">
+        <section
+          className="card"
+          id="welcome-account"
+          tabIndex={-1}
+          aria-labelledby="account-title"
+        >
           <div className="card-heading">
-            <span className="step">01</span>
-            <h2>
+            <h2 id="account-title">
               {mode === 'register'
                 ? 'Create your account'
                 : mode === 'reset'
@@ -65,7 +89,7 @@ export default function AuthForm() {
               ? 'Use your work email for a company community, or a personal email for the Pune locality pilot.'
               : mode === 'reset'
                 ? 'We’ll send you a link to choose a new password.'
-                : 'Sign in to continue to your workspace.'}
+                : 'Sign in to see offers from your community.'}
           </p>
           <form onSubmit={(event) => void submit(event)}>
             <label htmlFor="email">Email address</label>
@@ -119,33 +143,28 @@ export default function AuthForm() {
             )}
           </div>
         </section>
-        <section className="journey">
-          <p className="eyebrow">ONE STEP AT A TIME</p>
-          <h2>
-            Start with a name.
-            <br />
-            Grow into a circle.
-          </h2>
-          <ol>
+        <section className="journey welcome-guide" aria-labelledby="guide-title">
+          <h2 id="guide-title">Inside your circle</h2>
+          <ul>
             <li>
-              <strong>Create your account</strong>
-              <span>A private space that belongs to you.</span>
+              <strong>Feed</strong>
+              <span>Browse offers or post something you can share.</span>
             </li>
             <li>
-              <strong>Verify your email</strong>
-              <span>Confirm ownership of your email address.</span>
+              <strong>Requests</strong>
+              <span>Follow up on offers and arrange the exchange once a request is accepted.</span>
             </li>
             <li>
-              <strong>Save your profile</strong>
-              <span>Join your workplace or choose your locality.</span>
+              <strong>Profile</strong>
+              <span>Manage your display name and community details.</span>
             </li>
-          </ol>
+          </ul>
           <p className="fine-print">
-            Verify your work email to join the community for its exact domain. Personal email users
-            can join our Pune locality pilot.
+            Verify a work email to join your company’s circle. With a personal email, check local
+            coverage after sign-in. The neighborhood pilot covers parts of Baner, Pune.
           </p>
         </section>
       </div>
-    </>
+    </div>
   );
 }
