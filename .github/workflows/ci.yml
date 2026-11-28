@@ -41,6 +41,8 @@ jobs:
       id-token: write
     env:
       VITE_USE_FIREBASE_EMULATORS: 'false'
+      VITE_APP_VERSION: ${{ github.sha }}
+      VITE_FIREBASE_APP_CHECK_SITE_KEY: ${{ vars.FIREBASE_APP_CHECK_SITE_KEY }}
       VITE_FIREBASE_API_KEY: 'AIzaSyDuGF9LjsFv9q7oKnd2z5GzPPKZuvXF67s'
       VITE_FIREBASE_AUTH_DOMAIN: circle-exchange.firebaseapp.com
       VITE_FIREBASE_PROJECT_ID: circle-exchange

@@ -183,6 +183,129 @@ service cloud.firestore {
       }
     }
     // Other paths remain closed.
+
+    function feedbackAdmin() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/feedbackAdmins/$(request.auth.uid));
+    }
+    function feedbackPath(id) {
+      return /databases/$(database)/documents/feedback/$(id);
+    }
+    function feedbackOwner(id) {
+      return request.auth != null && get(feedbackPath(id)).data.reporterUid == request.auth.uid;
+    }
+    function feedbackOpen() {
+      let config = get(/databases/$(database)/documents/feedbackConfig/pilot).data;
+      return config.enabled == true
+        && (request.auth.token.firebase.sign_in_provider != 'anonymous' || config.guests == true);
+    }
+    function feedbackCounter(path, id) {
+      let next = getAfter(path).data;
+      return next.reportId == id && next.updatedAt == request.time;
+    }
+    function feedbackCounterWrite(d) {
+      return request.auth != null && d.keys().hasOnly(['reportId', 'updatedAt', 'count'])
+        && d.reportId is string && d.updatedAt == request.time
+        && !exists(feedbackPath(d.reportId))
+        && getAfter(feedbackPath(d.reportId)).data.reporterUid == request.auth.uid;
+    }
+    function feedbackString(value, max) {
+      return value is string && value.size() <= max;
+    }
+    function feedbackIdentity(d) {
+      let profile = /databases/$(database)/documents/users/$(request.auth.uid);
+      return d.reporterUid == request.auth.uid
+        && d.email == request.auth.token.get('email', '')
+        && d.verified == request.auth.token.get('email_verified', false)
+        && d.name == (exists(profile) ? get(profile).data.displayName : '');
+    }
+    function validFeedback(d, id) {
+      return d.keys().hasOnly(['reporterUid', 'email', 'verified', 'name', 'category', 'body',
+          'screen', 'version', 'viewport', 'browser', 'language', 'circle', 'createdAt', 'status'])
+        && feedbackIdentity(d)
+        && d.createdAt == request.time && d.status == 'new'
+        && d.category in ['bug', 'idea', 'experience']
+        && feedbackString(d.body, 2000) && d.body.matches('(?s).*[^\\s].*')
+        && d.screen in ['Welcome', 'Email verification', 'Feed', 'Shared listing',
+          'Requests', 'Profile', 'Feedback history', 'Other']
+        && feedbackString(d.version, 40) && feedbackString(d.viewport, 20)
+        && feedbackString(d.browser, 255) && feedbackString(d.language, 35)
+        && feedbackString(d.circle, 253)
+        && feedbackCounter(/databases/$(database)/documents/feedbackUsage/pilot, id)
+        && feedbackCounter(/databases/$(database)/documents/feedbackLimits/$(request.auth.uid), id);
+    }
+
+    match /feedbackAdmins/{uid} {
+      allow get: if owner(uid) && request.auth.token.email_verified == true;
+    }
+    match /feedbackConfig/pilot {
+      allow get: if true;
+    }
+    match /feedbackUsage/pilot {
+      allow get: if feedbackAdmin();
+      allow create: if feedbackCounterWrite(request.resource.data) && request.resource.data.count == 1;
+      allow update: if feedbackCounterWrite(request.resource.data)
+        && request.resource.data.count == resource.data.count + 1
+        && request.resource.data.count <= 500;
+    }
+    match /feedbackLimits/{uid} {
+      allow get: if owner(uid);
+      allow create, update: if owner(uid) && feedbackCounterWrite(request.resource.data)
+        && !('count' in request.resource.data)
+        && (resource == null || request.time >= resource.data.updatedAt + duration.value(5, 'm'));
+    }
+    match /feedback/{id} {
+      allow get: if feedbackAdmin() || (request.auth != null
+        && (resource != null ? resource.data.reporterUid == request.auth.uid
+          : id.matches(request.auth.uid + '_[A-Za-z0-9]{20}')));
+      allow list: if request.query.limit <= 25 && (feedbackAdmin() || owner(resource.data.reporterUid));
+      allow create: if request.auth != null && feedbackOpen()
+        && id.matches(request.auth.uid + '_[A-Za-z0-9]{20}')
+        && validFeedback(request.resource.data, id);
+      allow update: if feedbackAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])
+        && request.resource.data.status in ['new', 'reviewing', 'planned', 'in progress', 'shipped', 'closed']
+        && request.resource.data.resolvedAt == (
+          request.resource.data.status in ['closed', 'shipped'] ? request.time : null);
+      match /feedbackImages/{slot} {
+        allow get: if feedbackAdmin() || feedbackOwner(id);
+        allow create: if request.auth != null && slot in ['0', '1']
+          && !exists(feedbackPath(id))
+          && getAfter(feedbackPath(id)).data.reporterUid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['imageBytes'])
+          && request.resource.data.imageBytes is bytes
+          && request.resource.data.imageBytes.size() > 0
+          && request.resource.data.imageBytes.size() <= 153600;
+        allow delete: if feedbackAdmin();
+      }
+    }
+    match /feedbackThreads/{id} {
+      function validAppend(previous) {
+        let next = request.resource.data.messages;
+        let message = next[previous.size()];
+        let admin = feedbackAdmin();
+        return request.auth != null && (admin || feedbackOwner(id)) && exists(feedbackPath(id))
+          && request.resource.data.keys().hasOnly(['messages', 'updatedAt']) && request.resource.data.updatedAt == request.time
+          && next is list && next.size() <= 30
+          && next == previous.concat([message])
+          && message.keys().hasOnly(['body', 'author'])
+          && ((message.author == 'team' && admin) || (message.author == 'reporter' && feedbackOwner(id)))
+          && feedbackString(message.body, 1500) && message.body.matches('(?s).*[^\\s].*');
+      }
+      allow get: if feedbackAdmin() || feedbackOwner(id);
+      allow create: if validAppend([]);
+      allow update: if validAppend(resource.data.messages);
+    }
+    match /feedbackTriage/{id} {
+      allow get: if feedbackAdmin();
+      allow create, update: if feedbackAdmin() && exists(feedbackPath(id))
+        && request.resource.data.keys().hasOnly(['priority', 'notes', 'issue'])
+        && request.resource.data.priority in ['normal', 'high']
+        && feedbackString(request.resource.data.notes, 2000)
+        && request.resource.data.issue is int && request.resource.data.issue >= 0
+        && request.resource.data.issue <= 999999999;
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

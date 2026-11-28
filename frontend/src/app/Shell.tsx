@@ -3,8 +3,17 @@ import { signOut, type User } from 'firebase/auth';
 import { firebase } from '../services/firebase';
 import { friendlyError } from '../errors';
 import { currentPage, openPost } from './navigation';
+import FeedbackComposer from '../components/FeedbackComposer';
 
-export default function Shell({ children, user }: { children: ReactNode; user?: User | null }) {
+export default function Shell({
+  children,
+  user,
+  feedback,
+}: {
+  children: ReactNode;
+  user?: User | null;
+  feedback?: boolean;
+}) {
   const [error, setError] = useState('');
   const signedIn = !!user?.emailVerified;
   const current = currentPage();
@@ -49,7 +58,7 @@ export default function Shell({ children, user }: { children: ReactNode; user?: 
       </header>
       <main id="main-content">
         <div className="content">
-          {user && (
+          {user && !user.isAnonymous && (
             <div className="session">
               <span>{user.email}</span>
               <button
@@ -73,7 +82,15 @@ export default function Shell({ children, user }: { children: ReactNode; user?: 
           {children}
         </div>
         <footer>
-          CircleExchange <span>Good things, within your circle.</span>
+          CircleExchange
+          {feedback ? (
+            <FeedbackComposer
+              key={user?.isAnonymous ? 'guest' : (user?.uid ?? 'guest')}
+              user={user ?? null}
+            />
+          ) : (
+            <span>Good things, within your circle.</span>
+          )}
         </footer>
       </main>
       {signedIn && (

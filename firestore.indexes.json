@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "feedback",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "reporterUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "listings",
       "queryScope": "COLLECTION",
       "fields": [
@@ -9,5 +17,8 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    { "collectionGroup": "feedbackImages", "fieldPath": "imageBytes", "indexes": [] },
+    { "collectionGroup": "feedbackThreads", "fieldPath": "messages", "indexes": [] }
+  ]
 }

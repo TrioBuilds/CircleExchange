@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  linkWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
@@ -31,7 +33,12 @@ export default function AuthForm() {
       const auth = firebase!.auth;
       if (mode === 'register') {
         // The verification screen owns email sending, so a delivery failure never looks like failed registration.
-        await createUserWithEmailAndPassword(auth, email.trim(), password);
+        if (auth.currentUser?.isAnonymous)
+          await linkWithCredential(
+            auth.currentUser,
+            EmailAuthProvider.credential(email.trim(), password),
+          );
+        else await createUserWithEmailAndPassword(auth, email.trim(), password);
       } else if (mode === 'reset') {
         await sendPasswordResetEmail(auth, email.trim());
         setMessage('If this address has an account, a reset email will arrive shortly.');
