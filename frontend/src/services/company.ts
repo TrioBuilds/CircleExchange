@@ -1,6 +1,7 @@
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { companyForEmail, type Company } from '../companies';
 import { firebase } from './firebase';
+import { writeInsight } from './insightEvents';
 
 export type CompanyMembership = {
   company: Company;
@@ -45,6 +46,7 @@ export async function ensureCompanyMembership(uid: string): Promise<CompanyMembe
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    writeInsight(transaction, 'join', uid, company.id);
     return { company, workLocation: '', branch: '', status: 'active' };
   });
 }

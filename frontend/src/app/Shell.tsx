@@ -4,6 +4,7 @@ import { firebase } from '../services/firebase';
 import { friendlyError } from '../errors';
 import { currentPage, openPost } from './navigation';
 import FeedbackComposer from '../components/FeedbackComposer';
+import AdminLink from '../components/AdminLink';
 
 export default function Shell({
   children,
@@ -61,6 +62,7 @@ export default function Shell({
           {user && !user.isAnonymous && (
             <div className="session">
               <span>{user.email}</span>
+              {current === 'profile' && signedIn && <AdminLink key={user.uid} user={user} />}
               <button
                 className="text-button"
                 onClick={() => {

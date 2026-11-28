@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { firebase } from '../services/firebase';
+import { recordSignup } from '../services/insightEvents';
 import { friendlyError } from '../errors';
 import Notice from '../components/Notice';
 import ExchangeExample from '../components/ExchangeExample';
@@ -39,6 +40,7 @@ export default function AuthForm() {
             EmailAuthProvider.credential(email.trim(), password),
           );
         else await createUserWithEmailAndPassword(auth, email.trim(), password);
+        if (auth.currentUser) void recordSignup(auth.currentUser).catch(() => {});
       } else if (mode === 'reset') {
         await sendPasswordResetEmail(auth, email.trim());
         setMessage('If this address has an account, a reset email will arrive shortly.');

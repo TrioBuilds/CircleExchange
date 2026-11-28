@@ -9,6 +9,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { firebase } from '../services/firebase';
+import ExchangeOutcome from './ExchangeOutcome';
 
 type Message = { id: string; senderId: string; text: string };
 
@@ -16,10 +17,12 @@ export default function Conversation({
   board,
   listingId,
   uid,
+  isOwner,
 }: {
   board: string;
   listingId: string;
   uid: string;
+  isOwner?: boolean;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
@@ -89,6 +92,9 @@ export default function Conversation({
         ))}
       </ol>
       {!messages.length && !error && <p>No messages yet.</p>}
+      {isOwner !== undefined && (
+        <ExchangeOutcome board={board} listingId={listingId} uid={uid} isOwner={isOwner} />
+      )}
       <form onSubmit={send}>
         <label>
           Message

@@ -8,13 +8,13 @@ import {
   query,
   serverTimestamp,
   where,
-  setDoc,
+  writeBatch,
   startAfter,
-  updateDoc,
   type QueryDocumentSnapshot,
   type Timestamp,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
+import { writeInsight } from './insightEvents';
 import type { Company } from '../companies';
 
 export const categories = ['goods', 'services'] as const;
@@ -81,14 +81,24 @@ export async function postListing(
   uid: string,
   draft: ListingDraft,
 ) {
-  await setDoc(doc(listings(company)), {
+  const item = doc(listings(company));
+  const batch = writeBatch(firebase!.db);
+  batch.set(item, {
     ...draft,
     ownerId: uid,
     status: 'available',
     createdAt: serverTimestamp(),
   });
+  writeInsight(batch, draft.askDeadline ? 'ask' : 'offer', uid, company.id, item.id);
+  await batch.commit();
 }
 
 export async function markExchanged(company: Pick<Company, 'id' | 'name'>, id: string) {
-  await updateDoc(doc(listings(company), id), { status: 'exchanged' });
+  const item = doc(listings(company), id);
+  const uid = firebase!.auth.currentUser?.uid;
+  if (!uid) throw new Error('Sign in to continue.');
+  const batch = writeBatch(firebase!.db);
+  batch.update(item, { status: 'exchanged' });
+  writeInsight(batch, 'closed', uid, company.id, id);
+  await batch.commit();
 }

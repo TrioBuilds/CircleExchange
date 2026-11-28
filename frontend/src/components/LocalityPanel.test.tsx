@@ -4,9 +4,10 @@ import { afterEach, expect, it, vi } from 'vitest';
 import LocalityPanel from './LocalityPanel';
 import { matchLocation } from '../localities';
 const mocks = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
+vi.mock('../services/insightEvents', () => ({ saveLocalityMembership: mocks.save }));
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn(),
-  setDoc: mocks.save,
+
   getDocFromServer: mocks.load,
 }));
 vi.mock('../services/firebase', () => ({ firebase: { db: {} } }));
@@ -34,7 +35,7 @@ it('automatically saves a detected circle without a manual locality field', asyn
   render(<LocalityPanel uid="ada" />);
   await user.click(await screen.findByRole('button', { name: 'Find my circle' }));
   expect(await screen.findByText('Baner listings')).toBeVisible();
-  expect(mocks.save).toHaveBeenCalledWith(undefined, { areaId: 'local:pune:baner' });
+  expect(mocks.save).toHaveBeenCalledWith('ada', 'local:pune:baner');
   expect(screen.queryByLabelText('Choose my locality manually')).not.toBeInTheDocument();
   await user.selectOptions(screen.getByLabelText('Community feed'), 'local:pune');
   expect(screen.getByText('Pune listings')).toBeVisible();

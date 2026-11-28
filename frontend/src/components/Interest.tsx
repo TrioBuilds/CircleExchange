@@ -177,7 +177,9 @@ export default function Interest({
           <button onClick={() => setConversationOpen((open) => !open)}>
             {conversationOpen ? 'Close conversation' : 'Open conversation'}
           </button>
-          {conversationOpen && <Conversation board={board} listingId={item.id} uid={uid} />}
+          {conversationOpen && (
+            <Conversation board={board} listingId={item.id} uid={uid} isOwner={owner} />
+          )}
         </>
       )}
     </div>

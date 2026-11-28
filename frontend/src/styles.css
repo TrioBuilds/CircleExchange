@@ -942,3 +942,9 @@ textarea:focus {
     flex: 1 1 auto;
   }
 }
+
+.exchange-outcome {
+  border-block: 1px solid var(--line);
+  margin-top: 12px;
+  padding-block: 6px 12px;
+}

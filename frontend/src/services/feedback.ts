@@ -165,7 +165,7 @@ export async function submitFeedback(
     const marker = { reportId: reference.id, updatedAt: serverTimestamp() };
     transaction.set(usageRef, { ...marker, count: increment(1) });
     transaction.set(limitRef, marker);
-    transaction.set(reference, {
+    const report = {
       reporterUid: uid,
       email: token.claims.email ?? '',
       verified: token.claims.email_verified === true,
@@ -180,6 +180,15 @@ export async function submitFeedback(
       circle: circle.slice(0, 253),
       createdAt: serverTimestamp(),
       status: 'new',
+    };
+    transaction.set(reference, report);
+    transaction.set(doc(db, 'insightReports', reference.id), {
+      uid,
+      guest: report.email === '',
+      category,
+      status: report.status,
+      createdAt: report.createdAt,
+      resolvedAt: null,
     });
     bytes.forEach((imageBytes, i) =>
       transaction.set(doc(reference, 'feedbackImages', String(i)), { imageBytes }),
@@ -247,20 +256,22 @@ export function sendFeedbackReply(id: string, author: Reply['author'], body: str
   });
 }
 
-export async function saveFeedbackTriage(
-  id: string,
-  status: Status,
-  triage: Triage,
-  original: Status,
-) {
+export async function saveFeedbackTriage(report: Report, status: Status, triage: Triage) {
   const { db } = firebase!;
   const batch = writeBatch(db);
-  batch.set(doc(db, 'feedbackTriage', id), triage);
-  if (status !== original)
-    batch.update(doc(db, 'feedback', id), {
+  batch.set(doc(db, 'feedbackTriage', report.id), triage);
+  if (status !== report.status) {
+    const resolvedAt = status === 'closed' || status === 'shipped' ? serverTimestamp() : null;
+    batch.update(doc(db, 'feedback', report.id), { status, resolvedAt });
+    batch.set(doc(db, 'insightReports', report.id), {
+      uid: report.reporterUid,
+      guest: report.email === '',
+      category: report.category,
       status,
-      resolvedAt: status === 'closed' || status === 'shipped' ? serverTimestamp() : null,
+      createdAt: report.createdAt,
+      resolvedAt,
     });
+  }
   await batch.commit();
 }
 

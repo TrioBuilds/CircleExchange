@@ -1,0 +1,132 @@
+.admin-header,
+.admin-title,
+.admin-filters,
+.admin-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.admin-header {
+  justify-content: space-between;
+  padding: 18px clamp(20px, 4vw, 64px);
+  background: white;
+  border-bottom: 1px solid var(--line);
+}
+.admin-header a,
+.admin-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.admin-nav {
+  margin-bottom: 24px;
+}
+.admin-nav a {
+  padding-inline: 12px;
+}
+.admin-nav [aria-current='page'] {
+  border-radius: 12px;
+  background: var(--soft);
+  font-weight: 700;
+}
+.admin-tools,
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 18px;
+  margin-top: 16px;
+}
+.admin-tool {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+}
+.admin-tool:hover {
+  border-color: var(--purple);
+}
+.admin-title {
+  justify-content: space-between;
+  align-items: start;
+}
+.admin-overview {
+  display: grid;
+  gap: 18px;
+}
+.admin-overview .admin-summary {
+  margin: 0;
+}
+.admin-filters {
+  align-items: end;
+}
+.admin-filters small {
+  padding-bottom: 6px;
+}
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
+  gap: 12px;
+  margin-block: 16px;
+}
+.admin-stat {
+  background: var(--soft);
+  border-radius: 12px;
+  padding: 12px;
+}
+.admin-stat dt {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.admin-stat dd {
+  margin: 4px 0 0;
+  font-size: 1.65rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin-table-scroll {
+  overflow: auto;
+  max-width: 100%;
+}
+.admin-table-scroll:focus-visible {
+  outline: 3px solid var(--purple);
+  outline-offset: 4px;
+}
+.admin-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+}
+.admin-table th,
+.admin-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.admin-table th:first-child {
+  text-align: left;
+}
+.admin-table tbody tr:last-child {
+  background: var(--soft);
+  font-weight: 700;
+}
+.admin-table button {
+  min-height: 44px;
+  text-align: left;
+}
+.admin-timeline {
+  padding: 0;
+  list-style: none;
+}
+.admin-timeline li {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: 12px;
+  padding-block: 6px;
+}
+.admin-timeline meter {
+  width: 100%;
+  accent-color: var(--purple);
+}
