@@ -101,6 +101,16 @@ export default function Shell({
         </div>
         <footer>
           CircleExchange
+          <details className="install-help">
+            <summary>Install on your phone</summary>
+            <ul>
+              <li>Android Chrome: open the menu and choose Install or Add to home screen.</li>
+              <li>
+                iPhone Safari: Share → Add to Home Screen. Turn on Open as Web App and tap Add.
+              </li>
+            </ul>
+            <p>Open CircleExchange from your home screen to use it without the address bar.</p>
+          </details>
           {feedback ? (
             <FeedbackComposer
               key={user?.isAnonymous ? 'guest' : (user?.uid ?? 'guest')}

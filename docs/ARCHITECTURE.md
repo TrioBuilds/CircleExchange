@@ -102,6 +102,8 @@ Local emulators use only `demo-circleexchange`. The client rejects accidental li
 
 Production uses explicit Firebase project selection. Build and deploy rules before publishing Hosting. The deployment procedure must reject emulator mode and missing configuration. CI deploys successfully validated main commits automatically. Feature branches cannot deploy; billing changes are not automated.
 
+Firebase Hosting also serves the web app manifest and launcher icons. A home-screen install opens the same site in standalone mode. The browser generates the Android launch screen from the manifest. Public routes keep their regular URLs, and the installed app uses the network to load updates and data.
+
 ## 9. Growth after funding
 
 Keep the same browser application and stable IDs. Introduce trusted server functions only for features that require secrets, reliable background jobs or privileged workflows. Add storage for images with strict size/type/access controls. Introduce payments only after transaction, refund and moderation flows are defined. Evaluate search and observability against measured demand. Firestore can remain the database; a later SQL migration would require a deliberate data migration rather than a frontend rewrite.
