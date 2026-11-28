@@ -1,13 +1,17 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { onIdTokenChanged, type User } from 'firebase/auth';
 import { configuration, firebase } from './services/firebase';
 import Shell from './app/Shell';
 import Workspace from './app/Workspace';
 import { currentPage } from './app/navigation';
 import AuthForm from './pages/AuthPage';
-import FeedbackPage, { FounderFeedback } from './pages/FeedbackPage';
+import FeedbackPage from './pages/FeedbackPage';
+import type { AdminPath } from './pages/AdminArea';
 import Verification from './pages/VerificationPage';
 import { clearDrafts } from './services/drafts';
+import { recordVerification } from './services/insightEvents';
+
+const AdminArea = lazy(() => import('./pages/AdminArea'));
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -27,6 +31,10 @@ export default function App() {
       setLoading(false);
     });
   }, []);
+  useEffect(() => {
+    if (user && verified) void recordVerification(user).catch(() => {});
+  }, [user, verified]);
+
   if (!configuration.ready)
     return (
       <Shell>
@@ -46,14 +54,25 @@ export default function App() {
       </Shell>
     );
   const current = currentPage();
+  const path = location.pathname.replace(/\/$/, '');
+  if (
+    !loading &&
+    user &&
+    verified &&
+    ['/admin', '/admin/feedback', '/admin/overview'].includes(path)
+  ) {
+    return (
+      <Suspense fallback={<p role="status">Loading admin workspace…</p>}>
+        <AdminArea key={user.uid} user={user} path={path as AdminPath} />
+      </Suspense>
+    );
+  }
   let content: ReactNode;
 
   if (loading) {
     content = <p role="status">Loading your workspace…</p>;
-  } else if (location.pathname.replace(/\/$/, '') === '/feedback') {
+  } else if (path === '/feedback') {
     content = <FeedbackPage key={user?.uid ?? 'visitor'} user={user} />;
-  } else if (location.pathname.replace(/\/$/, '') === '/admin/feedback' && user && verified) {
-    content = <FounderFeedback key={user.uid} user={user} />;
   } else if (!user || user.isAnonymous) {
     content = <AuthForm />;
   } else if (!verified) {

@@ -141,6 +141,10 @@ service cloud.firestore {
       function seller() {
         return activeMember(companyId) && get(offerPath()).data.ownerId == request.auth.uid;
       }
+      allow update: if participant() && resource.data.status == 'reserved'
+        && request.resource.data.status == 'exchanged'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && getAfter(/databases/$(database)/documents/communities/$(companyId)/listings/$(listingId)/private/outcome).data.confirmedAt == request.time;
       allow update: if seller() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
         && ((resource.data.status in ['available','reserved'] && request.resource.data.status == 'exchanged')
         || (resource.data.status == 'available' && request.resource.data.status == 'reserved' && existsAfter(reservation())));
@@ -172,6 +176,29 @@ service cloud.firestore {
           && (request.auth.uid == get(offerPath()).data.ownerId || request.auth.uid == buyer)
           && get(buyerRequest(buyer)).data.status == 'accepted';
       }
+
+      function validOutcome(before, after) {
+        let ownerAction = request.auth.uid == get(offerPath()).data.ownerId;
+        return after.keys().hasOnly(['ownerConfirmedAt', 'partnerConfirmedAt', 'confirmedAt'])
+          && get(offerPath()).data.status in ['reserved', 'exchanged']
+          && before.confirmedAt == null
+          && (ownerAction
+            ? before.ownerConfirmedAt == null && after.ownerConfirmedAt == request.time
+              && after.partnerConfirmedAt == before.partnerConfirmedAt
+            : before.partnerConfirmedAt == null && after.partnerConfirmedAt == request.time
+              && after.ownerConfirmedAt == before.ownerConfirmedAt)
+          && (after.ownerConfirmedAt != null && after.partnerConfirmedAt != null
+            ? after.confirmedAt == request.time && getAfter(offerPath()).data.status == 'exchanged'
+              && getAfter(/databases/$(database)/documents/insightEvents/$('confirmed~' + companyId + '~' + listingId)).data.at == request.time
+            : after.confirmedAt == null);
+      }
+      match /private/outcome {
+        allow get: if participant();
+        allow create: if participant()
+          && validOutcome({ 'ownerConfirmedAt': null, 'partnerConfirmedAt': null, 'confirmedAt': null }, request.resource.data);
+        allow update: if participant() && validOutcome(resource.data, request.resource.data);
+      }
+
       match /messages/{messageId} {
         allow get: if participant();
         allow list: if participant() && request.query.limit <= 30;
@@ -182,7 +209,92 @@ service cloud.firestore {
           && request.resource.data.createdAt == request.time;
       }
     }
-    // Other paths remain closed.
+
+    function insightsAdmin() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/insightsAdmins/$(request.auth.uid));
+    }
+    match /insightsAdmins/{uid} {
+      allow get: if owner(uid) && request.auth.token.email_verified == true;
+    }
+    function insightEventAccess(id) {
+      let uid = request.auth.uid;
+      return id in ['signup~' + uid, 'verified~' + uid] || id.matches('join~[^~]+~' + uid);
+    }
+    function insightAccount(id, d) {
+      return d.circle == '' && d.post == '' && id == d.kind + '~' + d.uid
+        && request.auth.token.get('email', '') != ''
+        && (d.kind == 'signup' || (request.auth.token.email_verified == true
+          && exists(/databases/$(database)/documents/insightEvents/$('signup~' + d.uid))));
+    }
+    function insightJoin(id, d) {
+      let locality = /databases/$(database)/documents/localityMemberships/$(d.uid);
+      let member = /databases/$(database)/documents/communities/$(d.circle)/members/$(d.uid);
+      return d.post == '' && id == 'join~' + d.circle + '~' + d.uid
+        && (supportedArea(d.circle)
+          ? verifiedPersonal() && getAfter(locality).data.areaId == d.circle
+            && (!exists(locality) || get(locality).data.areaId != d.circle)
+          : verifiedCompany(d.circle) && !exists(member)
+            && getAfter(member).data.createdAt == request.time
+            && getAfter(member).data.status == 'active');
+    }
+    function insightListing(id, d) {
+      let post = /databases/$(database)/documents/communities/$(d.circle)/listings/$(d.post);
+      let reply = /databases/$(database)/documents/communities/$(d.circle)/listings/$(d.post)/requests/$(d.uid);
+      let outcome = /databases/$(database)/documents/communities/$(d.circle)/listings/$(d.post)/private/outcome;
+      let key = d.kind + '~' + d.circle + '~' + d.post;
+      return d.post != '' && activeMember(d.circle)
+        && id == (d.kind == 'reply' ? key + '~' + d.uid : key)
+        && ((d.kind in ['offer', 'ask'] && !exists(post)
+            && getAfter(post).data.createdAt == request.time
+            && getAfter(post).data.ownerId == d.uid
+            && ('askDeadline' in getAfter(post).data) == (d.kind == 'ask'))
+          || (d.kind == 'reply' && !exists(reply) && getAfter(reply).data.createdAt == request.time)
+          || (d.kind == 'match' && get(post).data.ownerId == d.uid
+            && get(post).data.status == 'available' && getAfter(post).data.status == 'reserved')
+          || (d.kind == 'closed' && get(post).data.ownerId == d.uid
+            && get(post).data.status in ['available', 'reserved'] && getAfter(post).data.status == 'exchanged')
+          || (d.kind == 'confirmed' && getAfter(outcome).data.confirmedAt == request.time
+            && (!exists(outcome) || get(outcome).data.confirmedAt == null)
+            && (getAfter(outcome).data.ownerConfirmedAt == request.time
+              ? get(post).data.ownerId == d.uid : get(post).data.ownerId != d.uid)));
+    }
+    match /insightEvents/{id} {
+      allow get: if insightsAdmin() || (request.auth != null && insightEventAccess(id));
+      allow list: if insightsAdmin() && request.query.limit <= 250;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['kind', 'uid', 'circle', 'post', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time
+        && request.resource.data.circle is string && request.resource.data.circle.size() <= 253
+        && request.resource.data.post is string && request.resource.data.post.size() <= 100
+        && (request.resource.data.kind in ['signup', 'verified']
+          ? insightAccount(id, request.resource.data)
+          : request.resource.data.kind == 'join'
+            ? insightJoin(id, request.resource.data)
+            : request.resource.data.kind in ['offer', 'ask', 'reply', 'match', 'closed', 'confirmed']
+              && insightListing(id, request.resource.data));
+    }
+    match /insightCoverage/current {
+      allow get: if insightsAdmin();
+    }
+    match /insightReports/{id} {
+      function matchesReport() {
+        let d = request.resource.data;
+        let r = getAfter(feedbackPath(id)).data;
+        return d.keys().hasOnly(['uid', 'guest', 'category', 'status', 'createdAt', 'resolvedAt'])
+          && d.uid == r.reporterUid
+          && d.guest == (r.email == '')
+          && d.category == r.category && d.status == r.status && d.createdAt == r.createdAt
+          && d.resolvedAt == r.get('resolvedAt', null);
+      }
+      allow get: if insightsAdmin();
+      allow list: if insightsAdmin() && request.query.limit <= 250;
+      allow create, update: if matchesReport()
+        && ((!exists(feedbackPath(id)) && owner(request.resource.data.uid))
+          || (feedbackAdmin() && get(feedbackPath(id)).data.status != request.resource.data.status));
+    }
+
 
     function feedbackAdmin() {
       return request.auth != null && request.auth.token.email_verified == true

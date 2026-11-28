@@ -421,12 +421,10 @@ function FeedbackDetail({
                 onSubmit={(event) => {
                   event.preventDefault();
                   void act(async () => {
-                    await saveFeedbackTriage(
-                      report.id,
-                      status,
-                      { ...detail.triage, issue: Number(issue) },
-                      report.status,
-                    );
+                    await saveFeedbackTriage(report, status, {
+                      ...detail.triage,
+                      issue: Number(issue),
+                    });
                     if (status !== report.status) {
                       const resolvedAt =
                         status === 'shipped' || status === 'closed' ? Timestamp.now() : null;

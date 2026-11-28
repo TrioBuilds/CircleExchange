@@ -7,10 +7,11 @@ import {
   query,
   runTransaction,
   serverTimestamp,
-  setDoc,
+  writeBatch,
   where,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
+import { writeInsight } from './insightEvents';
 
 export type InterestStatus = 'pending' | 'accepted' | 'declined';
 export type InterestReply = { uid: string; name: string; note?: string };
@@ -31,12 +32,16 @@ export async function requestInterest(
 ) {
   if (note !== undefined && (!note.trim() || note.trim().length > 500))
     throw new Error('Enter a reply of up to 500 characters.');
-  await setDoc(doc(listing(board, id), 'requests', uid), {
+  const item = listing(board, id);
+  const batch = writeBatch(firebase!.db);
+  batch.set(doc(item, 'requests', uid), {
     status: 'pending',
     name: name.trim(),
     ...(note !== undefined ? { note: note.trim() } : {}),
     createdAt: serverTimestamp(),
   });
+  writeInsight(batch, 'reply', uid, board, id);
+  await batch.commit();
 }
 export async function requestNames(
   board: string,
@@ -68,6 +73,7 @@ export async function decide(board: string, id: string, buyer: string, accept: b
     if (accept) {
       tx.set(doc(item, 'private', 'reservation'), { buyer });
       tx.update(item, { status: 'reserved' });
+      writeInsight(tx, 'match', String(offer.data()?.ownerId), board, id);
     }
   });
 }

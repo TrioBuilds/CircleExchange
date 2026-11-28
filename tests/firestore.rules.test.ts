@@ -730,7 +730,16 @@ describe('private feedback pilot', () => {
     const key = id(uid, options.suffix);
     const marker = { reportId: key, updatedAt: serverTimestamp() };
     const batch = writeBatch(db);
-    batch.set(doc(db, 'feedback', key), { ...report(uid), ...options.data });
+    const reportData = { ...report(uid), ...options.data };
+    batch.set(doc(db, 'feedback', key), reportData);
+    batch.set(doc(db, 'insightReports', key), {
+      uid,
+      guest: reportData.email === '',
+      category: reportData.category,
+      status: reportData.status,
+      createdAt: reportData.createdAt,
+      resolvedAt: null,
+    });
     batch.set(doc(db, 'feedbackUsage/pilot'), { ...marker, count: options.count ?? increment(1) });
     batch.set(doc(db, 'feedbackLimits', uid), marker);
     if (options.imageSize !== undefined)
@@ -861,5 +870,159 @@ describe('private feedback pilot', () => {
     await assertFails(setDoc(conversation(user()), thread(second)));
     await assertFails(setDoc(conversation(user('bob')), thread(first, second)));
     await assertSucceeds(setDoc(conversation(user()), thread(first, second)));
+  });
+});
+
+describe('admin insights and confirmed exchanges', () => {
+  const listing = 'communities/hp/listings/book';
+  const path = listing + '/private/outcome';
+  const hp = (uid: string) =>
+    env.authenticatedContext(uid, { email: uid + '@hp.com', email_verified: true }).firestore();
+  const event = (kind: string, uid: string, circle = '', post = '') => ({
+    kind,
+    uid,
+    circle,
+    post,
+    at: serverTimestamp(),
+  });
+
+  it('separates insights from feedback and private source data', async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'insightsAdmins/analyst'), {});
+      await setDoc(doc(db, 'feedbackAdmins/support'), {});
+      await setDoc(doc(db, 'insightReports/example'), { category: 'bug' });
+      await setDoc(doc(db, 'feedback/example'), { reporterUid: 'member', body: 'Private report' });
+      await setDoc(doc(db, 'users/member'), { displayName: 'Private' });
+    });
+    await assertSucceeds(getDoc(doc(user('analyst'), 'insightReports/example')));
+    await assertFails(getDoc(doc(user('analyst', false), 'insightReports/example')));
+    await assertFails(getDoc(doc(user('support'), 'insightReports/example')));
+    await assertFails(getDoc(doc(user('analyst'), 'feedback/example')));
+    await assertFails(getDoc(doc(user('analyst'), 'users/member')));
+    await assertFails(setDoc(doc(user('member'), 'insightsAdmins/member'), {}));
+    await assertSucceeds(getDocs(query(collection(user('analyst'), 'insightEvents'), limit(250))));
+    await assertFails(getDocs(collection(user('analyst'), 'insightEvents')));
+  });
+
+  it('records onboarding once and ties a join to the underlying membership change', async () => {
+    const member = env
+      .authenticatedContext('local', { email: 'local@gmail.com', email_verified: true })
+      .firestore();
+    const unverified = env
+      .authenticatedContext('new', { email: 'new@gmail.com', email_verified: false })
+      .firestore();
+    await assertFails(
+      setDoc(doc(unverified, 'insightEvents/verified~new'), event('verified', 'new')),
+    );
+    await assertSucceeds(
+      setDoc(doc(unverified, 'insightEvents/signup~new'), event('signup', 'new')),
+    );
+    await assertFails(setDoc(doc(unverified, 'insightEvents/signup~new'), event('signup', 'new')));
+    const verified = env
+      .authenticatedContext('new', { email: 'new@gmail.com', email_verified: true })
+      .firestore();
+    await assertSucceeds(
+      setDoc(doc(verified, 'insightEvents/verified~new'), event('verified', 'new')),
+    );
+    const circle = 'local:pune:baner';
+    const join = doc(member, 'insightEvents/join~' + circle + '~local');
+    await assertSucceeds(getDoc(join));
+    await assertFails(setDoc(join, event('join', 'local', circle)));
+    const batch = writeBatch(member);
+    batch.set(doc(member, 'localityMemberships/local'), { areaId: circle });
+    batch.set(join, event('join', 'local', circle));
+    await assertSucceeds(batch.commit());
+  });
+
+  it('records publishing, replies and matches only alongside the actual exchange action', async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      for (const uid of ['seller', 'buyer']) {
+        await setDoc(doc(context.firestore(), 'communities/hp/members', uid), { status: 'active' });
+      }
+    });
+    const seller = hp('seller');
+    const buyer = hp('buyer');
+    const offer = doc(seller, 'insightEvents/offer~hp~book');
+    const reply = doc(buyer, 'insightEvents/reply~hp~book~buyer');
+    await assertFails(setDoc(offer, event('offer', 'seller', 'hp', 'book')));
+    const publish = writeBatch(seller);
+    publish.set(doc(seller, listing), {
+      ownerId: 'seller',
+      title: 'Book',
+      description: 'Paperback',
+      pickup: 'Lobby',
+      category: 'goods',
+      pricePaise: 0,
+      status: 'available',
+      createdAt: serverTimestamp(),
+    });
+    publish.set(offer, event('offer', 'seller', 'hp', 'book'));
+    await assertSucceeds(publish.commit());
+    await assertFails(getDoc(offer));
+    await assertFails(setDoc(reply, event('reply', 'buyer', 'hp', 'book')));
+    const respond = writeBatch(buyer);
+    respond.set(doc(buyer, listing + '/requests/buyer'), {
+      name: 'Buyer',
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    });
+    respond.set(reply, event('reply', 'buyer', 'hp', 'book'));
+    await assertSucceeds(respond.commit());
+    const match = writeBatch(seller);
+    match.update(doc(seller, listing + '/requests/buyer'), { status: 'accepted' });
+    match.set(doc(seller, listing + '/private/reservation'), { buyer: 'buyer' });
+    match.update(doc(seller, listing), { status: 'reserved' });
+    match.set(doc(seller, 'insightEvents/match~hp~book'), event('match', 'seller', 'hp', 'book'));
+    await assertSucceeds(match.commit());
+  });
+
+  it('requires a separate acknowledgement from each accepted participant', async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      for (const uid of ['seller', 'buyer', 'other'])
+        await setDoc(doc(db, 'communities/hp/members', uid), { status: 'active' });
+      await setDoc(doc(db, listing), { ownerId: 'seller', status: 'reserved' });
+      await setDoc(doc(db, listing + '/private/reservation'), { buyer: 'buyer' });
+      await setDoc(doc(db, listing + '/requests/buyer'), { status: 'accepted' });
+      await setDoc(doc(db, 'insightsAdmins/analyst'), {});
+    });
+    const seller = hp('seller'),
+      buyer = hp('buyer'),
+      other = hp('other');
+    const first = {
+      ownerConfirmedAt: serverTimestamp(),
+      partnerConfirmedAt: null,
+      confirmedAt: null,
+    };
+    await assertFails(getDoc(doc(other, path)));
+    await assertFails(getDoc(doc(user('analyst'), path)));
+    await assertFails(setDoc(doc(other, path), first));
+    await assertFails(
+      setDoc(doc(seller, path), { ...first, partnerConfirmedAt: serverTimestamp() }),
+    );
+    await assertFails(updateDoc(doc(buyer, listing), { status: 'exchanged' }));
+    await assertSucceeds(setDoc(doc(seller, path), first));
+    const original = (await getDoc(doc(buyer, path))).data()?.ownerConfirmedAt;
+    const confirmed = {
+      ownerConfirmedAt: original,
+      partnerConfirmedAt: serverTimestamp(),
+      confirmedAt: serverTimestamp(),
+    };
+    await assertFails(setDoc(doc(seller, path), confirmed));
+    await assertFails(setDoc(doc(buyer, path), confirmed));
+    const finish = writeBatch(buyer);
+    finish.set(doc(buyer, path), confirmed);
+    finish.update(doc(buyer, listing), { status: 'exchanged' });
+    finish.set(
+      doc(buyer, 'insightEvents/confirmed~hp~book'),
+      event('confirmed', 'buyer', 'hp', 'book'),
+    );
+    await assertSucceeds(finish.commit());
+    await assertFails(setDoc(doc(buyer, path), confirmed));
+    expect((await getDoc(doc(seller, listing))).data()?.status).toBe('exchanged');
+    expect((await getDoc(doc(user('analyst'), 'insightEvents/confirmed~hp~book'))).exists()).toBe(
+      true,
+    );
   });
 });

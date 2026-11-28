@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { doc, getDocFromServer, setDoc } from 'firebase/firestore';
+import { doc, getDocFromServer } from 'firebase/firestore';
+import { saveLocalityMembership } from '../services/insightEvents';
 import { firebase } from '../services/firebase';
 import { hierarchy, matchLocation } from '../localities';
 import Inbox from './Inbox';
@@ -76,7 +77,7 @@ export default function LocalityPanel({
           return;
         }
         const area = match.area;
-        void setDoc(doc(firebase!.db, 'localityMemberships', uid), { areaId: area.id })
+        void saveLocalityMembership(uid, area.id)
           .then(() => {
             setPrimary(area.id);
             setFeed(area.id);
