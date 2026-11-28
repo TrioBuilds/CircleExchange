@@ -724,6 +724,7 @@ describe('private feedback pilot', () => {
       count?: number;
       imageSize?: number;
       slot?: string;
+      secondImage?: boolean;
       data?: Record<string, unknown>;
     } = {},
   ) {
@@ -740,11 +741,19 @@ describe('private feedback pilot', () => {
       createdAt: reportData.createdAt,
       resolvedAt: null,
     });
-    batch.set(doc(db, 'feedbackUsage/pilot'), { ...marker, count: options.count ?? increment(1) });
+    batch.set(
+      doc(db, 'feedbackUsage/pilot'),
+      { ...marker, count: options.count ?? increment(1) },
+      { merge: true },
+    );
     batch.set(doc(db, 'feedbackLimits', uid), marker);
     if (options.imageSize !== undefined)
       batch.set(doc(db, 'feedback', key, 'feedbackImages', options.slot ?? '0'), {
         imageBytes: bytes(options.imageSize),
+      });
+    if (options.secondImage)
+      batch.set(doc(db, 'feedback', key, 'feedbackImages', '1'), {
+        imageBytes: bytes(153600),
       });
     return batch.commit();
   }
@@ -770,16 +779,25 @@ describe('private feedback pilot', () => {
     );
   const conversation = (db: Firestore) => doc(db, 'feedbackThreads', id());
 
-  it('stores a complete guest submission and attachment only for the reporter and founder', async () => {
+  it('stores a guest submission with two attachments only for the reporter and founder', async () => {
     await settings();
+    await assertSucceeds(submit(user('existing'), 'existing'));
     const db = guest();
-    await assertSucceeds(submit(db, 'guest', { imageSize: 153600 }));
+    await assertSucceeds(
+      submit(db, 'guest', {
+        imageSize: 153600,
+        secondImage: true,
+        data: { body: 'The mobile app felt slow.\nI attached two screenshots.', screen: 'Welcome' },
+      }),
+    );
+    expect((await getDoc(doc(user('founder'), 'feedbackUsage/pilot'))).data()?.count).toBe(2);
     await assertSucceeds(list(db, 'guest'));
     await assertFails(list(db));
     await assertSucceeds(list(user('founder')));
     for (const path of [
       'feedback/' + id('guest'),
       'feedback/' + id('guest') + '/feedbackImages/0',
+      'feedback/' + id('guest') + '/feedbackImages/1',
     ]) {
       await assertSucceeds(getDoc(doc(db, path)));
       await assertSucceeds(getDoc(doc(user('founder'), path)));
