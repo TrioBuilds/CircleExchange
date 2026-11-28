@@ -163,7 +163,7 @@ export async function submitFeedback(
     if (last && Date.now() < last.toMillis() + 300_000)
       throw new Error('Please wait five minutes between feedback reports.');
     const marker = { reportId: reference.id, updatedAt: serverTimestamp() };
-    transaction.set(usageRef, { ...marker, count: increment(1) });
+    transaction.set(usageRef, { ...marker, count: increment(1) }, { merge: true });
     transaction.set(limitRef, marker);
     const report = {
       reporterUid: uid,
