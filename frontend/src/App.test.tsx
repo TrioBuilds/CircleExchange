@@ -17,7 +17,7 @@ vi.mock('./services/firebase', () => ({
 }));
 vi.mock('./services/profile', () => ({ loadProfile: mocks.load, saveProfile: mocks.save }));
 vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: (_auth: unknown, callback: (user: unknown) => void) => {
+  onIdTokenChanged: (_auth: unknown, callback: (user: unknown) => void) => {
     mocks.authChanged = callback;
     callback(mocks.user);
     return () => {};

@@ -10,6 +10,9 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
+  Bytes,
+  where,
+  increment,
   writeBatch,
   Timestamp,
   query,
@@ -690,4 +693,173 @@ it('shows a prior request in the two participants’ inboxes and reflects the se
   expect(await inbox(buyer, 'buyer', 'Sent')).toMatchObject([
     { status: 'accepted', available: false },
   ]);
+});
+
+describe('private feedback pilot', () => {
+  const id = (uid = 'ada', suffix = 'A') => uid + '_' + suffix.repeat(20);
+  const bytes = (size: number) => Bytes.fromUint8Array(new Uint8Array(size));
+  function report(uid = 'ada') {
+    return {
+      reporterUid: uid,
+      email: '',
+      verified: uid !== 'guest',
+      name: '',
+      category: 'bug',
+      body: 'I cannot open my circle.',
+      screen: 'Email verification',
+      version: 'abcd123',
+      viewport: '390x844',
+      browser: '',
+      language: 'en',
+      circle: '',
+      createdAt: serverTimestamp(),
+      status: 'new',
+    };
+  }
+  function submit(
+    db: Firestore,
+    uid = 'ada',
+    options: {
+      suffix?: string;
+      count?: number;
+      imageSize?: number;
+      slot?: string;
+      data?: Record<string, unknown>;
+    } = {},
+  ) {
+    const key = id(uid, options.suffix);
+    const marker = { reportId: key, updatedAt: serverTimestamp() };
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'feedback', key), { ...report(uid), ...options.data });
+    batch.set(doc(db, 'feedbackUsage/pilot'), { ...marker, count: options.count ?? increment(1) });
+    batch.set(doc(db, 'feedbackLimits', uid), marker);
+    if (options.imageSize !== undefined)
+      batch.set(doc(db, 'feedback', key, 'feedbackImages', options.slot ?? '0'), {
+        imageBytes: bytes(options.imageSize),
+      });
+    return batch.commit();
+  }
+  function guest() {
+    return env
+      .authenticatedContext('guest', { firebase: { sign_in_provider: 'anonymous' } })
+      .firestore();
+  }
+  async function settings(values = { enabled: true, guests: true }) {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'feedbackConfig/pilot'), values);
+      await setDoc(doc(context.firestore(), 'feedbackAdmins/founder'), {});
+    });
+  }
+  const list = (db: Firestore, uid?: string) =>
+    getDocs(
+      query(
+        collection(db, 'feedback'),
+        ...(uid ? [where('reporterUid', '==', uid)] : []),
+        orderBy('createdAt', 'desc'),
+        limit(25),
+      ),
+    );
+  const conversation = (db: Firestore) => doc(db, 'feedbackThreads', id());
+
+  it('stores a complete guest submission and attachment only for the reporter and founder', async () => {
+    await settings();
+    const db = guest();
+    await assertSucceeds(submit(db, 'guest', { imageSize: 153600 }));
+    await assertSucceeds(list(db, 'guest'));
+    await assertFails(list(db));
+    await assertSucceeds(list(user('founder')));
+    for (const path of [
+      'feedback/' + id('guest'),
+      'feedback/' + id('guest') + '/feedbackImages/0',
+    ]) {
+      await assertSucceeds(getDoc(doc(db, path)));
+      await assertSucceeds(getDoc(doc(user('founder'), path)));
+      await assertFails(getDoc(doc(user('founder', false), path)));
+      await assertFails(getDoc(doc(user('bob'), path)));
+      await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), path)));
+    }
+    await assertSucceeds(
+      deleteDoc(doc(user('founder'), 'feedback', id('guest'), 'feedbackImages/0')),
+    );
+  });
+
+  it('closes guest intake and all intake independently', async () => {
+    await settings({ enabled: true, guests: false });
+    await assertFails(submit(guest(), 'guest'));
+    await assertSucceeds(submit(user()));
+    await settings({ enabled: false, guests: true });
+    await assertFails(submit(user('bob'), 'bob', { count: 2 }));
+  });
+
+  it('rejects bad identity snapshots and oversized or extra attachments atomically', async () => {
+    await settings();
+    await assertFails(submit(user(), 'ada', { data: { reporterUid: 'bob' } }));
+    await assertFails(submit(user(), 'ada', { data: { email: 'other@example.com' } }));
+    await assertFails(submit(user(), 'ada', { data: { name: 'Other person' } }));
+    await assertFails(submit(user(), 'ada', { data: { body: '   ' } }));
+    await assertFails(submit(user(), 'ada', { imageSize: 153601 }));
+    await assertFails(submit(user(), 'ada', { slot: '2', imageSize: 1 }));
+    await assertSucceeds(getDoc(doc(user(), 'feedback', id())));
+    await assertFails(getDoc(doc(user(), 'feedbackUsage/pilot')));
+    expect((await getDoc(doc(user('founder'), 'feedbackUsage/pilot'))).exists()).toBe(false);
+    await assertSucceeds(submit(user()));
+    await assertFails(
+      setDoc(doc(user(), 'feedback', id(), 'feedbackImages/1'), { imageBytes: bytes(8) }),
+    );
+  });
+
+  it('requires new reports and both quota markers to be written together', async () => {
+    await settings();
+    const db = user();
+    await assertFails(setDoc(doc(db, 'feedback', id()), report()));
+    await assertFails(
+      setDoc(doc(db, 'feedbackUsage/pilot'), {
+        count: 1,
+        reportId: id(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertSucceeds(submit(db));
+    await assertFails(submit(db, 'ada', { count: 2, suffix: 'B' }));
+    await assertFails(submit(user('bob'), 'bob', { count: 1 }));
+    await assertSucceeds(submit(user('bob'), 'bob', { count: 2 }));
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'feedbackUsage/pilot'), { count: 500 });
+    });
+    await assertFails(submit(user('cam'), 'cam', { count: 501 }));
+  });
+
+  it('allows the founder to triage privately and only participants to append replies', async () => {
+    await settings();
+    await submit(user());
+    const founder = user('founder');
+    const triage = { priority: 'high', issue: 42, notes: 'Internal investigation' };
+    await assertFails(setDoc(doc(user(), 'feedbackAdmins/ada'), {}));
+    await assertFails(setDoc(doc(user(), 'feedbackTriage', id()), triage));
+    await assertSucceeds(setDoc(doc(founder, 'feedbackTriage', id()), triage));
+    await assertFails(getDoc(doc(user(), 'feedbackTriage', id())));
+    await assertSucceeds(getDoc(doc(founder, 'feedbackTriage', id())));
+    await assertFails(
+      updateDoc(doc(user(), 'feedback', id()), { status: 'closed', resolvedAt: serverTimestamp() }),
+    );
+    await assertFails(
+      updateDoc(doc(founder, 'feedback', id()), {
+        body: 'Altered',
+        status: 'reviewing',
+        resolvedAt: null,
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(founder, 'feedback', id()), { status: 'reviewing', resolvedAt: null }),
+    );
+    const first = { author: 'team', body: 'Which screen showed the error?' };
+    const second = { author: 'reporter', body: 'Email verification.' };
+    const thread = (...messages: object[]) => ({ messages, updatedAt: serverTimestamp() });
+    await assertFails(setDoc(conversation(user()), thread(first)));
+    await assertSucceeds(setDoc(conversation(founder), thread(first)));
+    await assertFails(getDoc(conversation(user('bob'))));
+    await assertFails(setDoc(conversation(user()), thread(second)));
+    await assertFails(setDoc(conversation(user('bob')), thread(first, second)));
+    await assertSucceeds(setDoc(conversation(user()), thread(first, second)));
+  });
 });

@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { onIdTokenChanged, type User } from 'firebase/auth';
 import { configuration, firebase } from './services/firebase';
 import Shell from './app/Shell';
 import Workspace from './app/Workspace';
 import { currentPage } from './app/navigation';
 import AuthForm from './pages/AuthPage';
+import FeedbackPage, { FounderFeedback } from './pages/FeedbackPage';
 import Verification from './pages/VerificationPage';
 import { clearDrafts } from './services/drafts';
 
@@ -18,7 +19,7 @@ export default function App() {
       return;
     }
     let previousUid: string | undefined;
-    return onAuthStateChanged(firebase.auth, (next) => {
+    return onIdTokenChanged(firebase.auth, (next) => {
       if (previousUid && previousUid !== next?.uid) clearDrafts(previousUid);
       previousUid = next?.uid;
       setUser(next);
@@ -49,7 +50,11 @@ export default function App() {
 
   if (loading) {
     content = <p role="status">Loading your workspace…</p>;
-  } else if (!user) {
+  } else if (location.pathname.replace(/\/$/, '') === '/feedback') {
+    content = <FeedbackPage key={user?.uid ?? 'visitor'} user={user} />;
+  } else if (location.pathname.replace(/\/$/, '') === '/admin/feedback' && user && verified) {
+    content = <FounderFeedback key={user.uid} user={user} />;
+  } else if (!user || user.isAnonymous) {
     content = <AuthForm />;
   } else if (!verified) {
     content = <Verification user={user} onVerified={() => setVerified(true)} />;
@@ -66,5 +71,9 @@ export default function App() {
     );
   }
 
-  return <Shell user={user}>{content}</Shell>;
+  return (
+    <Shell user={user} feedback={!loading}>
+      {content}
+    </Shell>
+  );
 }
