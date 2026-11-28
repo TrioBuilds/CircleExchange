@@ -12,7 +12,7 @@ if (
   env.VITE_FIREBASE_PROJECT_ID?.startsWith('demo-')
 ) {
   console.error(
-    'Production build blocked: supply real Firebase web configuration and explicitly set VITE_USE_FIREBASE_EMULATORS=false. See documentation/SETUP.md.',
+    'Production build blocked: supply real Firebase web configuration and explicitly set VITE_USE_FIREBASE_EMULATORS=false. See docs/SETUP.md.',
   );
   process.exit(1);
 }

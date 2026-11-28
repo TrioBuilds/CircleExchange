@@ -48,7 +48,7 @@ export default function App() {
           </p>
           <p className="notice">{configuration.reason}</p>
           <p>
-            See <code>documentation/SETUP.md</code> for local and Firebase Spark setup.
+            See <code>docs/SETUP.md</code> for local and Firebase Spark setup.
           </p>
         </section>
       </Shell>
