@@ -168,9 +168,8 @@ it('provides separate page links and only loads profile details on the profile p
 it('opens the existing offer form from the primary navigation', async () => {
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
   render(<App />);
-  const composer = document.createElement('details');
-  composer.className = 'compose';
-  composer.scrollIntoView = vi.fn();
+  const composer = document.createElement('dialog');
+  composer.id = 'post-offer';
   document.body.append(composer);
   await userEvent.setup().click(
     within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', {
@@ -195,17 +194,16 @@ it('takes a member without a feed to community setup when they choose Post', asy
 it('opens the ask form separately from the offer form', async () => {
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
   render(<App />);
-  const ask = document.createElement('details');
-  ask.className = 'compose ask-compose';
-  ask.scrollIntoView = vi.fn();
-  const offer = document.createElement('details');
-  offer.className = 'compose';
-  offer.scrollIntoView = vi.fn();
+  const ask = document.createElement('dialog');
+  ask.id = 'ask-circle';
+  const offer = document.createElement('dialog');
+  offer.id = 'post-offer';
   document.body.append(ask, offer);
   try {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Ask my circle' }));
     expect(ask.open).toBe(true);
     expect(offer.open).toBe(false);
+    ask.close();
     await userEvent.setup().click(
       within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', {
         name: 'Post an offer',
@@ -215,5 +213,26 @@ it('opens the ask form separately from the offer form', async () => {
   } finally {
     ask.remove();
     offer.remove();
+  }
+});
+
+it('applies the chosen appearance and remembers it across app mounts', async () => {
+  const view = render(<App />);
+  const user = userEvent.setup();
+  const appearance = await screen.findByRole('combobox', { name: 'Appearance' });
+  try {
+    await user.selectOptions(appearance, 'dark');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    view.unmount();
+    render(<App />);
+    const restored = await screen.findByRole('combobox', { name: 'Appearance' });
+    expect(restored).toHaveValue('dark');
+    await user.selectOptions(restored, 'light');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    await user.selectOptions(restored, 'system');
+    expect(localStorage.getItem('circleexchange-appearance')).toBeNull();
+  } finally {
+    localStorage.removeItem('circleexchange-appearance');
+    delete document.documentElement.dataset.theme;
   }
 });

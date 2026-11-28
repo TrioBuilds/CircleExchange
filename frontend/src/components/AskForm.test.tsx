@@ -4,6 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import AskForm from './AskForm';
 import { postListing } from '../services/listings';
 import { saveDraft, loadDraft } from '../services/drafts';
+import { openSheet } from '../app/navigation';
 vi.mock('../services/listings', () => ({
   categories: ['goods', 'services'],
   postListing: vi.fn(),
@@ -25,7 +26,7 @@ it('posts a need with a local deadline and clears the draft only after success',
   vi.mocked(postListing).mockRejectedValueOnce(new Error()).mockResolvedValueOnce(undefined);
   const user = userEvent.setup();
   render(<AskForm company={company} uid="ada" onPublished={onPublished} />);
-  await user.click(screen.getByText('Ask my circle'));
+  openSheet('ask-circle');
   await user.click(screen.getByRole('button', { name: 'Post my ask' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Your draft is still here');
   expect(loadDraft('ada', 'hp', 'ask')).toBeDefined();
@@ -51,7 +52,7 @@ it('rejects past and overly distant deadlines without writing', async () => {
     deadline: dateInput(Date.now() - 3600000),
   });
   render(<AskForm company={company} uid="ada" onPublished={vi.fn()} />);
-  await user.click(screen.getByText('Ask my circle'));
+  openSheet('ask-circle');
   await user.click(screen.getByRole('button', { name: 'Post my ask' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('future deadline within 30 days');
   fireEvent.change(screen.getByLabelText('Reply by'), {
@@ -63,7 +64,7 @@ it('rejects past and overly distant deadlines without writing', async () => {
 it('restores an ask after leaving the page and keeps other accounts and offer drafts separate', async () => {
   const user = userEvent.setup();
   const view = render(<AskForm company={company} uid="ada" onPublished={vi.fn()} />);
-  await user.click(screen.getByText('Ask my circle'));
+  openSheet('ask-circle');
   await user.type(screen.getByLabelText('What do you need?'), 'Projector for tonight');
   fireEvent.change(screen.getByLabelText('Reply by'), {
     target: { value: dateInput(Date.now() + 3600000) },
@@ -77,7 +78,7 @@ it('restores an ask after leaving the page and keeps other accounts and offer dr
   expect(screen.getByLabelText('What do you need?')).toHaveValue(saved?.title);
   expect(screen.getByLabelText('Reply by')).toHaveValue(saved?.deadline);
   expect(loadDraft('ada', 'hp', 'offer')).toBeUndefined();
-  await user.click(screen.getByText('Ask my circle'));
+  openSheet('ask-circle');
   await user.click(screen.getByRole('button', { name: 'Discard ask draft' }));
   expect(loadDraft('ada', 'hp', 'ask')).toBeUndefined();
   expect(screen.getByLabelText('What do you need?')).toHaveValue('');
@@ -112,7 +113,7 @@ it('keeps a newer draft when an earlier submission finishes', async () => {
   );
   render(<AskForm company={company} uid="ada" onPublished={vi.fn()} />);
   const user = userEvent.setup();
-  await user.click(screen.getByText('Ask my circle'));
+  openSheet('ask-circle');
   await user.click(screen.getByRole('button', { name: 'Post my ask' }));
   fireEvent.change(screen.getByLabelText('What do you need?'), {
     target: { value: 'My next ask' },

@@ -112,12 +112,14 @@ export default function CompanyPanel({
         </>
       ) : (
         <>
-          <h2>Welcome to the {membership.company.name} community.</h2>
-          <span className="verified">✓ Company email verified</span>
-          <p>
-            You’ve joined automatically with your verified{' '}
-            <strong>@{membership.company.domain}</strong> email. No approval request is needed.
-          </p>
+          <div className="company-membership">
+            <h2>Welcome to the {membership.company.name} community.</h2>
+            <span className="verified">✓ Company email verified</span>
+            <p>
+              You’ve joined automatically with your verified{' '}
+              <strong>@{membership.company.domain}</strong> email. No approval request is needed.
+            </p>
+          </div>
           {page === 'feed' && link && link.board !== membership.company.id && (
             <p role="alert">
               This listing is outside your community. <a href="/feed">Return to your feed</a>

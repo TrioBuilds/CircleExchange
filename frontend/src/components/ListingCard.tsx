@@ -1,7 +1,9 @@
 import Interest from './Interest';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { openSheet } from '../app/navigation';
 import { listingUrl } from '../listingLink';
 import type { Listing } from '../services/listings';
+import Sheet from './Sheet';
 
 const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
@@ -25,7 +27,8 @@ export default function ListingCard({
   refresh: () => void;
 }) {
   const deadline = item.askDeadline?.toMillis();
-  const [expanded, setExpanded] = useState(focused);
+  const sheetId = useId();
+  const [visited, setVisited] = useState(false);
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     if (deadline === undefined || deadline <= now) return;
@@ -41,26 +44,11 @@ export default function ListingCard({
         : expired
           ? 'Expired'
           : 'Open ask';
-  return (
-    <details
-      className={item.askDeadline ? 'listing-card ask-card' : 'listing-card'}
-      open={focused ? true : undefined}
-      onToggle={(event) => setExpanded(event.currentTarget.open)}
-    >
-      <summary>
-        <span className="listing-title">{item.title}</span>
-        <span className="listing-meta">
-          <span>
-            {item.askDeadline
-              ? 'Ask my circle'
-              : item.discount
-                ? `Helper fee ${currency.format(item.pricePaise / 100)}`
-                : item.pricePaise === 0
-                  ? 'Free'
-                  : currency.format(item.pricePaise / 100)}
-          </span>
-          <span className="status-tag">{item.askDeadline ? askState : item.status}</span>
-        </span>
+  const summary = (
+    <>
+      <span className="listing-copy">
+        <small>{item.askDeadline ? 'Ask' : item.discount ? 'Discount offer' : 'Offer'}</small>
+        <strong className="listing-title">{item.title}</strong>
         {item.askDeadline ? (
           <span className="listing-location">
             Reply by {item.askDeadline.toDate().toLocaleString()}
@@ -81,7 +69,23 @@ export default function ListingCard({
             {item.category} · Pickup: {item.pickup}
           </span>
         )}
-      </summary>
+      </span>
+      <span className="listing-meta">
+        {!item.askDeadline && (
+          <strong>
+            {item.discount
+              ? `Helper fee ${currency.format(item.pricePaise / 100)}`
+              : item.pricePaise === 0
+                ? 'Free'
+                : currency.format(item.pricePaise / 100)}
+          </strong>
+        )}
+        <span className="status-tag">{item.askDeadline ? askState : item.status}</span>
+      </span>
+    </>
+  );
+  const body = (
+    <div className="listing-detail">
       <p>{item.description}</p>
       {item.discount && (
         <section className="discount-terms" aria-label="Booking terms">
@@ -110,13 +114,36 @@ export default function ListingCard({
           {item.askDeadline ? 'Close ask' : 'Mark exchanged'}
         </button>
       )}
-      <Interest
-        board={board}
-        item={item}
-        uid={uid}
-        refresh={refresh}
-        autoLoad={focused || (!!item.askDeadline && expanded)}
-      />
-    </details>
+      <Interest board={board} item={item} uid={uid} refresh={refresh} autoLoad />
+    </div>
+  );
+
+  return (
+    <article className="listing-card">
+      {focused ? (
+        <>
+          <div className="listing-summary">{summary}</div>
+          {body}
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="listing-summary listing-trigger"
+            aria-haspopup="dialog"
+            aria-controls={sheetId}
+            onClick={(event) => {
+              setVisited(true);
+              openSheet(sheetId, event.currentTarget);
+            }}
+          >
+            {summary}
+          </button>
+          <Sheet id={sheetId} title={item.title} busy={busy}>
+            {visited && body}
+          </Sheet>
+        </>
+      )}
+    </article>
   );
 }
