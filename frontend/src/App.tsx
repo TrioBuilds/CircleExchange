@@ -6,12 +6,12 @@ import Workspace from './app/Workspace';
 import { currentPage } from './app/navigation';
 import AuthForm from './pages/AuthPage';
 import FeedbackPage from './pages/FeedbackPage';
-import type { AdminPath } from './pages/AdminArea';
+import type { AdminPath } from './features/admin/AdminArea';
 import Verification from './pages/VerificationPage';
 import { clearDrafts } from './services/drafts';
 import { recordVerification } from './services/insightEvents';
 
-const AdminArea = lazy(() => import('./pages/AdminArea'));
+const AdminArea = lazy(() => import('./features/admin/AdminArea'));
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);

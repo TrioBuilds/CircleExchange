@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { expect, it } from 'vitest';
 import { insightMetrics } from './insightMetrics';
-import type { InsightEvent } from '../services/insightEvents';
+import type { InsightEvent } from '../../services/insightEvents';
 
 const now = Date.parse('2026-11-28T06:00:00Z');
 const recent = Timestamp.fromMillis(now - 60_000);

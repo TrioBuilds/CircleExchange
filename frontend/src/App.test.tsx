@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
   reset: vi.fn(),
   load: vi.fn(),
   save: vi.fn(),
+  canManageFeedback: vi.fn(),
+  canViewInsights: vi.fn(),
+  loadInsights: vi.fn(),
   authChanged: null as null | ((user: unknown) => void),
 }));
 vi.mock('./services/firebase', () => ({
@@ -16,6 +19,14 @@ vi.mock('./services/firebase', () => ({
   firebase: { auth: {}, db: {} },
 }));
 vi.mock('./services/profile', () => ({ loadProfile: mocks.load, saveProfile: mocks.save }));
+vi.mock('./services/feedback', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./services/feedback')>()),
+  canManageFeedback: mocks.canManageFeedback,
+}));
+vi.mock('./features/admin/insights', () => ({
+  canViewInsights: mocks.canViewInsights,
+  loadInsights: mocks.loadInsights,
+}));
 vi.mock('firebase/auth', () => ({
   onIdTokenChanged: (_auth: unknown, callback: (user: unknown) => void) => {
     mocks.authChanged = callback;
@@ -39,6 +50,9 @@ beforeEach(() => {
   mocks.user = null;
   mocks.load.mockResolvedValue('Ada');
   mocks.save.mockResolvedValue(undefined);
+  mocks.canManageFeedback.mockResolvedValue(false);
+  mocks.canViewInsights.mockResolvedValue(false);
+  mocks.loadInsights.mockResolvedValue({ events: [], reports: [] });
 });
 afterEach(() => {
   window.history.replaceState({}, '', '/');
@@ -77,6 +91,22 @@ it('blocks profile access before email verification', () => {
   expect(screen.getByRole('heading', { name: 'Verify your email address' })).toBeInTheDocument();
   expect(mocks.load).not.toHaveBeenCalled();
   expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
+});
+it('loads the admin insights deep link for an approved user', async () => {
+  window.history.replaceState({}, '', '/admin/overview');
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  mocks.canViewInsights.mockResolvedValue(true);
+  render(<App />);
+  expect(await screen.findByRole('heading', { name: 'Insights' })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'Onboarding' })).toBeVisible();
+  expect(mocks.loadInsights).toHaveBeenCalledOnce();
+});
+it('keeps insights data unloaded for a user without admin access', async () => {
+  window.history.replaceState({}, '', '/admin/overview');
+  mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };
+  render(<App />);
+  expect(await screen.findByRole('heading', { name: 'Admin access required' })).toBeVisible();
+  expect(mocks.loadInsights).not.toHaveBeenCalled();
 });
 it('clears the departing account drafts on sign-out and account switching', () => {
   mocks.user = { uid: 'ada', email: 'ada@example.com', emailVerified: true };

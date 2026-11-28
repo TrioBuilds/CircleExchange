@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { FounderFeedback } from './FeedbackPage';
-import { canManageFeedback } from '../services/feedback';
-import { canViewInsights, loadInsights, type Insights } from '../services/insights';
+import { FounderFeedback } from '../../pages/FeedbackPage';
+import { canManageFeedback } from '../../services/feedback';
+import { canViewInsights, loadInsights, type Insights } from './insights';
 import { circleName, insightMetrics } from './insightMetrics';
-import '../admin.css';
+import './admin.css';
 
 export type AdminPath = '/admin' | '/admin/feedback' | '/admin/overview';
 

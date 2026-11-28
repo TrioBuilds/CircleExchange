@@ -13,9 +13,9 @@ import {
   type Timestamp,
 } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
-import { firebase } from './firebase';
-import type { Category, Status } from './feedback';
-import type { InsightEvent } from './insightEvents';
+import { firebase } from '../../services/firebase';
+import type { Category, Status } from '../../services/feedback';
+import type { InsightEvent } from '../../services/insightEvents';
 
 export type ReportInsight = {
   uid: string;
