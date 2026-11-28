@@ -4,7 +4,7 @@ A browser-based community marketplace, built in small, testable milestones.
 
 ## Current status
 
-The hosted web app supports email/password accounts, verified work-domain communities, and a self-selected Pune locality pilot for personal email users. Members can publish free or INR-priced listings, browse their community feeds, request an item, and accept or decline requests. Accepted buyers and sellers can coordinate in a private listing conversation. Residential administration, reporting, and broader pilot safeguards remain planned. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
+The hosted web app supports email/password accounts, verified work-domain communities, and a self-selected Pune locality pilot for personal email users. Members can publish free or INR-priced listings, browse their community feeds, request an item, and accept or decline requests. Accepted buyers and sellers can coordinate in a private listing conversation. Residential administration, reporting, and broader pilot safeguards remain planned. See [company onboarding](docs/COMPANY_ONBOARDING.md).
 
 ## Stack
 
@@ -60,9 +60,11 @@ listing links, and error messages remain in the source root.
 
 ## Documentation
 
-- [Architecture](documentation/ARCHITECTURE.md): the authoritative implementation design.
-- [Setup and deployment](documentation/SETUP.md): local setup and free Firebase project checklist.
-- [Small-task roadmap](todolist.md): current and next milestones.
-- [Archived plans](documentation/archive/): historical context only; not current implementation instructions.
+- [Architecture](docs/ARCHITECTURE.md): the authoritative implementation design.
+- [Setup and deployment](docs/SETUP.md): local setup and free Firebase project checklist.
+- [Small-task roadmap](docs/ROADMAP.md): current and next milestones.
+- [Pilot operations](docs/VALIDATION.md): hosted validation checklist.
+- [Feedback](docs/FEEDBACK.md) and [admin insights](docs/ADMIN_INSIGHTS.md): pilot workflows.
+- [Archived plans and research](docs/archive/): superseded designs and early research.
 
 Free hosting means staying within provider quotas, not unlimited capacity. Keep the Firebase project on Spark with no billing account. Production is hosted at https://circle-exchange.web.app/. Deployments from main require project configuration and short-lived Google credentials; this repository does not contain production credentials.

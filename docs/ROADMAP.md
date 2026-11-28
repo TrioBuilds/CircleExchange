@@ -1,7 +1,7 @@
-# CircleExchange: small-task implementation roadmap
+# CircleExchange roadmap
 
-Authoritative architecture: [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md).
-Old plans in `documentation/archive/` are historical only.
+Authoritative architecture: [ARCHITECTURE.md](ARCHITECTURE.md).
+Old plans in `archive/` are historical only.
 
 ## Milestone 1 — Web foundation and private account
 
@@ -25,13 +25,14 @@ Old plans in `documentation/archive/` are historical only.
 - [x] Add application and emulator authorization tests.
 - [x] Merge PR and validate deployed onboarding.
 
-Residential communities, membership requests and administrator tooling are deferred. See [company onboarding](documentation/COMPANY_ONBOARDING.md).
+The pilot supports self-selected Pune localities and private admin feedback and insights. Residential administration and membership requests remain planned. See [company onboarding](COMPANY_ONBOARDING.md) and [admin insights](ADMIN_INSIGHTS.md).
 
 ## Milestone 3 — Text marketplace
 
-- [ ] Agree on category, integer price/currency and listing lifecycle contracts.
-- [ ] Add persistent create/edit/archive flows with owner and membership rules.
-- [ ] Add bounded browsing, category filters and cursor pagination.
+- [x] Define listing categories and INR prices stored as integer paise.
+- [x] Add persistent listing creation with owner and membership rules.
+- [ ] Add listing edit and archive flows.
+- [x] Add bounded browsing, category filters and cursor pagination.
 - [ ] Test another community's data and another seller's mutation attempts.
 
 Acceptance: two approved users can publish and browse listings without cross-community leakage. No image storage required.
