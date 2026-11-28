@@ -1,7 +1,7 @@
-import { areas } from '../localities';
-import { COMPANIES } from '../companies';
-import type { InsightEvent } from '../services/insightEvents';
-import type { Insights } from '../services/insights';
+import { areas } from '../../localities';
+import { COMPANIES } from '../../companies';
+import type { InsightEvent } from '../../services/insightEvents';
+import type { Insights } from './insights';
 
 export const dayMs = 86_400_000;
 const indiaOffset = 330 * 60_000;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { canManageFeedback } from '../services/feedback';
-import { canViewInsights } from '../services/insights';
+import { canViewInsights } from '../features/admin/insights';
 
 export default function AdminLink({ user }: { user: User }) {
   const [visible, setVisible] = useState(false);
