@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { loadDraft, saveDraft } from './services/drafts';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -57,31 +57,31 @@ beforeEach(() => {
 afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
-it('explains an illustrative exchange and connects the welcome actions to the account form', async () => {
-  const user = userEvent.setup();
+it('explains an illustrative exchange and connects the welcome actions to the account form', () => {
   render(<App />);
   const example = within(screen.getByRole('region', { name: 'Movie night for two' }));
   expect(example.getByText('Illustrative exchange')).toBeVisible();
   expect(example.getByText('Up to ₹300')).toBeVisible();
   expect(example.getByText('Fee paid to the helper')).toBeVisible();
-  await user.click(example.getByRole('button', { name: /Replay the example/ }));
+  fireEvent.click(example.getByRole('button', { name: /Replay the example/ }));
   expect(example.getByText('Up to ₹300')).toBeVisible();
-  await user.click(screen.getByRole('link', { name: 'Join my circle' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Join my circle' }));
   expect(screen.getByRole('heading', { name: 'Create your account' })).toBeVisible();
   expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password');
-  await user.click(screen.getByRole('link', { name: 'Sign in' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Sign in' }));
   expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Forgot password?' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }));
   expect(screen.getByRole('button', { name: 'Send reset email' })).toBeVisible();
   expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
 });
 it('shows a useful sign-in error and permits retry', async () => {
   mocks.login.mockRejectedValue({ code: 'auth/invalid-credential' });
-  const user = userEvent.setup();
   render(<App />);
-  await user.type(screen.getByLabelText('Email address'), 'ada@example.com');
-  await user.type(screen.getByLabelText('Password'), 'bad-password');
-  await user.click(screen.getByRole('button', { name: 'Sign in →' }));
+  fireEvent.change(screen.getByLabelText('Email address'), {
+    target: { value: 'ada@example.com' },
+  });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'bad-password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Sign in →' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('email or password is incorrect');
   expect(screen.getByRole('button', { name: 'Sign in →' })).toBeEnabled();
 });
