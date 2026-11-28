@@ -2,32 +2,31 @@ import { useState, type FormEvent } from 'react';
 import type { Company } from '../companies';
 import { categories, postListing, type DiscountDetails } from '../services/listings';
 import { useDraft } from '../hooks/useDraft';
+import Sheet from './Sheet';
 
 export default function ListingForm({
   company,
   uid,
   busy,
   setBusy,
-  setError,
-  setNotice,
   onPublished,
 }: {
   company: Pick<Company, 'id' | 'name'>;
   uid: string;
   busy: boolean;
   setBusy: (value: boolean) => void;
-  setError: (value: string) => void;
-  setNotice: (value: string) => void;
   onPublished: () => void;
 }) {
   const [formVersion, setFormVersion] = useState(0);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const { draft, save, clear, message: draftMessage } = useDraft(uid, company.id, 'offer');
   const [offer, setOffer] = useState(draft?.offer ?? 'free');
   const isDiscount = offer === 'discount';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setNotice('');
+    setMessage('');
     const form = event.currentTarget;
     const fields = new FormData(form);
     const value = (name: string) => String(fields.get(name) ?? '').trim();
@@ -86,6 +85,7 @@ export default function ListingForm({
         setFormVersion((v) => v + 1);
         setOffer('free');
       }
+      setMessage('Listing published.');
       onPublished();
     } catch {
       setError('Could not publish the listing. Your draft is still here.');
@@ -95,16 +95,9 @@ export default function ListingForm({
   }
 
   return (
-    <details
-      className="compose"
-      id="post-offer"
-      open={window.location.hash === '#post-offer' ? true : undefined}
-    >
-      <summary>
-        <span>Offer something to your community</span>
-        <small>{draft ? 'Continue your saved offer' : 'Free items, goods, and services'}</small>
-      </summary>
+    <Sheet id="post-offer" title="Post an offer" composer busy={busy}>
       <p>
+        Post in <strong>{company.name}</strong>.{' '}
         {isDiscount
           ? 'Describe eligibility and conditions for the discount. Include any limits in the description.'
           : 'Include a shared pickup point instead of a private address.'}
@@ -213,22 +206,35 @@ export default function ListingForm({
             <input name="pickup" defaultValue={draft?.pickup} maxLength={120} required />
           </label>
         )}
+        {error && (
+          <p className="notice error" role="alert">
+            {error}
+          </p>
+        )}
+        {message && (
+          <p className="notice" role="status">
+            {message}
+          </p>
+        )}
         <small aria-live="polite">{draftMessage}</small>
         <button className="primary" disabled={busy}>
-          Publish listing
+          {busy ? 'Publishing…' : 'Publish listing'}
         </button>
         <button
           type="button"
           disabled={busy}
+          className="secondary"
           onClick={() => {
             clear();
             setOffer('free');
             setFormVersion((v) => v + 1);
+            setError('');
+            setMessage('');
           }}
         >
           Discard draft
         </button>
       </form>
-    </details>
+    </Sheet>
   );
 }

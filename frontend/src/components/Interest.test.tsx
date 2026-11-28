@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import Interest from './Interest';
@@ -22,6 +22,13 @@ const item = {
   pickup: 'Lobby',
 } as const;
 it('sends one request with the name chosen by the buyer', async () => {
+  let complete!: () => void;
+  vi.mocked(requestInterest).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        complete = resolve;
+      }),
+  );
   const user = userEvent.setup();
   render(<Interest board="hp" item={item} uid="buyer" refresh={vi.fn()} />);
   await user.click(screen.getByRole('button', { name: 'View my interest' }));
@@ -29,7 +36,13 @@ it('sends one request with the name chosen by the buyer', async () => {
   await user.click(screen.getByRole('button', { name: 'I’m interested' }));
   expect(myInterest).toHaveBeenCalledWith('hp', 'book', 'buyer');
   expect(requestInterest).toHaveBeenCalledWith('hp', 'book', 'buyer', 'Ada');
-  expect(await screen.findByText('Your request: pending')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  await act(async () => complete());
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Request sent. Follow up in Requests.',
+  );
+  expect(screen.getByRole('status')).toHaveFocus();
   expect(screen.queryByRole('button', { name: 'I’m interested' })).toBeNull();
 });
 it('shows the seller pending requests and refreshes the offer after acceptance', async () => {

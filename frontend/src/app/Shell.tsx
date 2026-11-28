@@ -5,6 +5,7 @@ import { friendlyError } from '../errors';
 import { currentPage, openPost } from './navigation';
 import FeedbackComposer from '../components/FeedbackComposer';
 import AdminLink from '../components/AdminLink';
+import { getAppearance, saveAppearance, type Appearance } from './appearance';
 
 export default function Shell({
   children,
@@ -16,6 +17,7 @@ export default function Shell({
   feedback?: boolean;
 }) {
   const [error, setError] = useState('');
+  const [appearance, setAppearance] = useState(getAppearance);
   const signedIn = !!user?.emailVerified;
   const current = currentPage();
   return (
@@ -56,6 +58,20 @@ export default function Shell({
             </button>
           </nav>
         )}
+        <select
+          className="appearance-select"
+          aria-label="Appearance"
+          value={appearance}
+          onChange={(event) => {
+            const value = event.target.value as Appearance;
+            setAppearance(value);
+            saveAppearance(value);
+          }}
+        >
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
       </header>
       <main id="main-content">
         <div className="content">

@@ -148,7 +148,7 @@ export default function LocalityPanel({
         </>
       ) : (
         <>
-          <p>
+          <p className="circle-path">
             Your circle: <strong>{permitted.map((area) => area.name).join(' → ')}</strong>
           </p>
           {page === 'feed' && link && !permitted.some((area) => area.id === link.board) && (

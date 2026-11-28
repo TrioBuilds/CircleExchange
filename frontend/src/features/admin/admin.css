@@ -10,7 +10,7 @@
 .admin-header {
   justify-content: space-between;
   padding: 18px clamp(20px, 4vw, 64px);
-  background: white;
+  background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
 .admin-header a,
@@ -43,7 +43,7 @@
   text-decoration: none;
 }
 .admin-tool:hover {
-  border-color: var(--purple);
+  border-color: var(--accent-ink);
 }
 .admin-title {
   justify-content: space-between;
@@ -89,7 +89,7 @@
   max-width: 100%;
 }
 .admin-table-scroll:focus-visible {
-  outline: 3px solid var(--purple);
+  outline: 3px solid var(--accent-ink);
   outline-offset: 4px;
 }
 .admin-table {
@@ -128,5 +128,5 @@
 }
 .admin-timeline meter {
   width: 100%;
-  accent-color: var(--purple);
+  accent-color: var(--accent-ink);
 }

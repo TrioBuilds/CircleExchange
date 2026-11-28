@@ -3,7 +3,7 @@ import CompanyPanel from '../components/CompanyPanel';
 import { linkedListing } from '../listingLink';
 import { isPersonalEmail } from '../companies';
 import ProfilePage from '../pages/ProfilePage';
-import { openPost, openAsk, type Page } from './navigation';
+import { openAsk, type Page } from './navigation';
 
 export default function Workspace({ user, current }: { user: User; current: Page }) {
   const listingLink = current === 'feed' && linkedListing();
@@ -16,25 +16,18 @@ export default function Workspace({ user, current }: { user: User; current: Page
           <p className="intro">View this listing and its replies in your community.</p>
         </>
       ) : current === 'feed' ? (
-        <section className="hero">
+        <section className="circle-hero">
           <div>
-            <p className="eyebrow">YOUR CIRCLE, YOUR PEOPLE</p>
-            <h1>
+            <h1>What do you need?</h1>
+            <p>
               {isPersonalEmail(user.email)
-                ? 'Good things, close to home.'
-                : 'Good things, within your circle.'}
-            </h1>
-            <p>Find offers, ask for help, and share with your community.</p>
-            <div className="hero-actions">
-              <button className="hero-post" onClick={openPost}>
-                Post an offer <span aria-hidden="true">→</span>
-              </button>
-              <button className="secondary" onClick={openAsk}>
-                Ask my circle
-              </button>
-            </div>
+                ? 'See who’s looking for a benefit nearby.'
+                : 'See who’s looking for a benefit in your work circle.'}
+            </p>
           </div>
-          <span className="hero-art" aria-hidden="true" />
+          <button className="primary" onClick={openAsk}>
+            Ask my circle
+          </button>
         </section>
       ) : (
         <>

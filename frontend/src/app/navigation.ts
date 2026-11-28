@@ -1,4 +1,5 @@
 import { linkedListing } from '../listingLink';
+import type { MouseEvent } from 'react';
 
 export type Page = 'feed' | 'requests' | 'profile';
 export function currentPage(): Page | null {
@@ -15,22 +16,29 @@ export function currentPage(): Page | null {
   }
 }
 
-export function openPost() {
-  openComposer('.compose:not(.ask-compose)', '#post-offer');
+export function openPost(event: MouseEvent<HTMLButtonElement>) {
+  openComposer('post-offer', event.currentTarget);
 }
 
-export function openAsk() {
-  openComposer('.ask-compose', '#ask-circle');
+export function openAsk(event: MouseEvent<HTMLButtonElement>) {
+  openComposer('ask-circle', event.currentTarget);
 }
 
-function openComposer(selector: string, hash: string) {
-  const composer = document.querySelector<HTMLDetailsElement>(selector);
-  if (composer) {
-    composer.open = true;
-    composer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } else if (currentPage() !== 'feed' || linkedListing()) window.location.href = '/feed' + hash;
-  else
-    document
-      .querySelector('[aria-label="Your community"]')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+export function openSheet(id: string, trigger?: HTMLButtonElement) {
+  const sheet = document.getElementById(id);
+  if (!(sheet instanceof HTMLDialogElement)) return false;
+  if (!sheet.open) {
+    trigger?.focus({ preventScroll: true });
+    sheet.showModal();
+  }
+  return true;
+}
+
+function openComposer(id: string, trigger: HTMLButtonElement) {
+  if (openSheet(id, trigger)) return;
+  if (currentPage() !== 'feed' || linkedListing()) {
+    window.location.href = '/feed#' + id;
+    return;
+  }
+  document.querySelector('[aria-label="Your community"]')?.scrollIntoView({ block: 'start' });
 }

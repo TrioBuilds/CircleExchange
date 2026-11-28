@@ -12,7 +12,7 @@
   margin: 20px 0 24px;
 }
 .welcome-copy h1 span {
-  color: var(--purple);
+  color: var(--accent-ink);
 }
 .welcome-copy .intro {
   max-width: 38ch;
@@ -60,13 +60,13 @@
   border-radius: 18px;
 }
 .example-need {
-  background: #fff;
+  background: var(--surface);
   margin-right: 32px;
   border-bottom-left-radius: 4px;
 }
 .example-help {
-  background: var(--purple);
-  color: #fff;
+  background: var(--orchid);
+  color: var(--on-orchid);
   margin-left: 32px;
   border-bottom-right-radius: 4px;
 }
@@ -84,14 +84,14 @@
   display: block;
   text-align: center;
   font-size: 1.6rem;
-  color: var(--purple-dark);
+  color: var(--accent-ink);
   line-height: 1;
   padding: 8px 0;
 }
 .example-receipt {
   margin: 24px 0 0;
   padding: 16px 20px 0;
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
 }
 .example-receipt > div {
@@ -109,14 +109,14 @@
   white-space: nowrap;
 }
 .example-receipt .example-net {
-  background: var(--lime);
+  background: var(--tint);
   margin: 14px -20px 0;
   padding: 18px 20px;
   border-radius: 0 0 16px 16px;
   align-items: center;
 }
 .example-net dd {
-  font-family: Nunito, sans-serif;
+  font-family: 'Rethink Sans', system-ui, sans-serif;
   font-size: 1.55rem;
 }
 .example-terms {
@@ -128,7 +128,7 @@
 .example-replay {
   border: 0;
   background: transparent;
-  color: var(--purple-dark);
+  color: var(--accent-ink);
   padding: 10px 0;
   min-height: 44px;
   font-size: 0.85rem;
@@ -167,7 +167,7 @@
   align-items: start;
 }
 .welcome-guide li strong {
-  color: var(--purple-dark);
+  color: var(--accent-ink);
 }
 .welcome-guide li span {
   color: var(--muted);

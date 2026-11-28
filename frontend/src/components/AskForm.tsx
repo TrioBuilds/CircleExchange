@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 import { categories, postListing } from '../services/listings';
 import type { Company } from '../companies';
 import { useDraft } from '../hooks/useDraft';
+import Sheet from './Sheet';
 
 export default function AskForm({
   company,
@@ -60,15 +61,7 @@ export default function AskForm({
   }
 
   return (
-    <details
-      className="compose ask-compose"
-      id="ask-circle"
-      open={window.location.hash === '#ask-circle' ? true : undefined}
-    >
-      <summary>
-        <span>Ask my circle</span>
-        <small>{draft ? 'Continue your saved ask' : 'Tell your circle what you need'}</small>
-      </summary>
+    <Sheet id="ask-circle" title="Ask my circle" composer busy={busy}>
       <p>
         Post a need in {company.name}. Members can offer to help before your deadline. Accept one
         helper to start a private conversation.
@@ -139,6 +132,6 @@ export default function AskForm({
           Discard ask draft
         </button>
       </form>
-    </details>
+    </Sheet>
   );
 }

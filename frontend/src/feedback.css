@@ -20,7 +20,7 @@
   width: min(570px, calc(100% - 24px));
   max-height: calc(100dvh - 24px);
   overflow: auto;
-  background: white;
+  background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -52,12 +52,12 @@
   cursor: pointer;
 }
 .feedback-tags label:has(input:checked) {
-  background: var(--lime);
+  background: var(--tint);
 }
 .feedback-tags input {
   width: auto;
   margin: 0;
-  accent-color: var(--purple);
+  accent-color: var(--accent-ink);
 }
 .feedback-form textarea,
 .feedback-detail textarea {
@@ -113,7 +113,7 @@
   margin: 8px 0;
 }
 .feedback-replies li[data-team='true'] {
-  background: var(--lime);
+  background: var(--tint);
 }
 @media (max-width: 620px) {
   .feedback-dialog {
