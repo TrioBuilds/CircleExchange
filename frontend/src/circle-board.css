@@ -116,6 +116,7 @@
   background: transparent;
   color: var(--muted);
   padding-inline: 5px;
+  font-size: 0.875rem;
 }
 
 [aria-label='Community listings'] .feed-types button[aria-pressed='true'] {
